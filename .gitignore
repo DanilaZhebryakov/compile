@@ -1,0 +1,14 @@
+
+*.log
+*.exe
+*.out
+*.depend
+*.png
+*.tmp
+
+/log/**
+/bin/**
+/obj/**
+form.pdf
+form.aux
+form.txt
