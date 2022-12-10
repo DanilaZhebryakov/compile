@@ -27,7 +27,7 @@ bool canExprOpBeUnaryL(exprOpType_t op);
 
 int getExprOpPriority(exprOpType_t op_type);
 
-const char* mathOpName(exprOpType_t op_type);
+const char* exprOpName(exprOpType_t op_type);
 
 exprOpType_t scanExprOp(const char* buffer);
 

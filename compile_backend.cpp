@@ -1,5 +1,5 @@
 #include "lib/bintree.h"
-#include "math/expr_elem.h"
+#include "expr/expr_elem.h"
 #include "var_table.h"
 #include "program_structure.h"
 
@@ -25,7 +25,7 @@ static void compileFuncCall(FILE* file, ProgramPosData* pos, int nargs, bool ret
 
     //save old element of rbp level table to stack. Then overwrite.
     ASM_OUT("push [%d]\n", RBP_BASE_POS - func_flvl);
-    ASM_OUT("push rbp\n" , RBP_BASE_POS - func_flvl);
+    ASM_OUT("push rbp\n" );
     ASM_OUT("pop [%d]\n" , RBP_BASE_POS - func_flvl);
 
     ASM_OUT("call rax\n");
@@ -321,6 +321,7 @@ static bool compileVarDef(F_DEF_ARGS){
     printExprElem(_logfile, expr->data);
     printExprElem(stderr  , expr->data);
     printf_log("\n");
+    return true;
 }
 
 static bool compileFuncDef(F_DEF_ARGS){

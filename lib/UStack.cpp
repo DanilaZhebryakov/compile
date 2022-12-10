@@ -213,7 +213,7 @@ varError_t ustackDtor(UStack* stk){
         stk->data = DESTRUCT_PTR;
         stk->size = -1;
         stk->capacity = -1;
-    #endif USTACK_NO_PROTECT
+    #endif
     return VAR_NOERROR;
 }
 
@@ -253,7 +253,7 @@ static varError_t ustackResize_(UStack* stk, size_t new_capacity){
     #endif
 
     #ifndef USTACK_NO_PROTECT
-        memset(stk->data + (stk->capacity * stk->elem_size), USTACK_BADMEM, (new_capacity - stk->capacity) * stk->elem_size);
+        memset((char*)stk->data + (stk->capacity * stk->elem_size), USTACK_BADMEM, (new_capacity - stk->capacity) * stk->elem_size);
     #endif
     stk->capacity = new_capacity;
     return VAR_NOERROR;
@@ -310,7 +310,7 @@ varError_t ustackPop(UStack* stk, void* elem_ptr){
     }
     stk->size--;
     #ifndef USTACK_NO_PROTECT
-        memset(stk->data + (stk->size * stk->elem_size), USTACK_BADMEM, stk->elem_size);
+        memset((char*)stk->data + (stk->size * stk->elem_size), USTACK_BADMEM, stk->elem_size);
     #endif
 
     if (stk->size * 2 < stk->capacity && stk->capacity > 2*USTACK_MIN_SIZE){

@@ -62,8 +62,8 @@ FILE* initLogFile(){
     time_t run_time = time(nullptr);
     fprint_time_date_short(logfile, run_time);
 
-    fprintf(logfile, "Program started. Run id:%08X\n", run_time);
-    fprintf(stderr , "Program started. Run id:%08X\n", run_time);
+    fprintf(logfile, "Program started. Run id:%08lX\n", run_time);
+    fprintf(stderr , "Program started. Run id:%08lX\n", run_time);
 
     atexit(printGoodbyeMsg);
 

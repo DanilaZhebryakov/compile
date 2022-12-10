@@ -1,5 +1,5 @@
-#include "math/expr_elem.h"
-#include "math/formule_utils.h"
+#include "expr/expr_elem.h"
+#include "expr/formule_utils.h"
 #include <ctype.h>
 
 static char getNextMeaningChar(FILE* file){
@@ -14,7 +14,6 @@ static void refillElemBuffer_(FILE* file, char* buffer, ExprElem* elem_buffer){
     char c = getNextMeaningChar(file);
 
     if (c == EOF || (strchr(CNTRL_CHARS, c))){
-        char* cntrl = CNTRL_CHARS;
         elem_buffer->type = EXPR_CNTRL;
         elem_buffer->chr  = c;
         return;
@@ -31,7 +30,7 @@ static bool scanMathPExpr_(FILE* file, BinTreeNode** tree_place, char* buffer, E
 static bool scanMathBExpr_(FILE* file, BinTreeNode** tree_place, char* buffer, ExprElem* elem_buffer, bool short_scan){
     if (elem_buffer->type == EXPR_OP){
             if (!canExprOpBeUnary(elem_buffer->op)){
-                error_log("Binary operator %s used as unary\n", mathOpName(elem_buffer->op));
+                error_log("Binary operator %s used as unary\n", exprOpName(elem_buffer->op));
                 return false;
             }
             elem_buffer->op = (exprOpType_t)(elem_buffer->op | EXPR_O_UNARY);
@@ -86,7 +85,7 @@ static bool scanMathPExpr_(FILE* file, BinTreeNode** tree_place, char* buffer, E
         }
         c = elem_buffer->chr;
         if (c != ')'){
-            error_log("No closing ')' Got '%c' instead\n", mathOpName(elem_buffer->op), c);
+            error_log("No closing ')' Got '%c' instead\n", c);
             return false;
         }
 
@@ -118,7 +117,7 @@ static bool scanMathExpr_(FILE* file, BinTreeNode** tree_place, char* buffer, Ex
         if (!scanMathExpr_(file, tree_place_cur, buffer, elem_buffer, priority+1))
             return false;
         if (elem_buffer->type == EXPR_OP && isExprOpUnary(elem_buffer->op)){
-            error_log("Unary operator %s used as binary\n", mathOpName(elem_buffer->op));
+            error_log("Unary operator %s used as binary\n", exprOpName(elem_buffer->op));
             return false;
         }
         binTreeUpdSize(*tree_place);
@@ -154,7 +153,7 @@ BinTreeNode* scanProgram(FILE* file){
     char* buffer = (char*)calloc(MAX_FORM_WORD_LEN, sizeof(char));
     BinTreeNode* tree =  nullptr;
     ExprElem elem_buffer = {};
-    elem_buffer.type == EXPR_PAIN;
+    elem_buffer.type = EXPR_PAIN;
 
     refillElemBuffer_(file, buffer, &elem_buffer);
     bool res = scanMathPExpr_(file, &tree, buffer, &elem_buffer, true);

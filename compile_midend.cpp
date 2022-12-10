@@ -2,5 +2,5 @@
 #include <ctype.h>
 #include <math.h>
 
-#include "math/expr_elem.h"
+#include "expr/expr_elem.h"
 #include "lib/bintree.h"

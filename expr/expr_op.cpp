@@ -3,7 +3,7 @@
 
 #include "expr_op.h"
 
-struct MathOp{
+struct ExprOp{
     const char* name;
     exprOpType_t op;
     int priorirty;
@@ -12,7 +12,7 @@ struct MathOp{
 #define EXPR_OP_DEF(_enum, _enumval, _name, _pri, _ret) \
 {_name, _enum, _pri},
 
-static const MathOp oplist[] = {
+static const ExprOp oplist[] = {
     #include "expr_op_defines.h"
 };
 #undef EXPR_OP_DEF
@@ -27,7 +27,7 @@ bool isAssignOp(exprOpType_t op){
     return(op == EXPR_O_EQRTL || op == EXPR_O_EQLTR);
 }
 
-static const int opcount = sizeof(oplist) / sizeof(MathOp);
+static const int opcount = sizeof(oplist) / sizeof(ExprOp);
 
 bool canExprOpBeUnary(exprOpType_t op){
     for (int i = 0; i < opcount; i++){
@@ -51,7 +51,7 @@ int getExprOpPriority(exprOpType_t op_type){
     return -1;
 }
 
-const char* mathOpName(exprOpType_t op_type){
+const char* exprOpName(exprOpType_t op_type){
     for (int i = 0; i < opcount; i++){
         if (oplist[i].op == op_type){
             return oplist[i].name;

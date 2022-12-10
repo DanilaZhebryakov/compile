@@ -2,7 +2,7 @@
 #define BINTREE_H_INCLUDED
 #include "lib/debug_utils.h"
 
-#include "math/expr_elem.h"
+#include "expr/expr_elem.h"
 
 #define BINTREE_ELEM_T  ExprElem
 #define BINTREE_BADELEM BAD_EXPR_DATA

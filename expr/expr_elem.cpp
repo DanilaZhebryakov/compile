@@ -9,7 +9,7 @@ const char* getExprKWName(exprKWType_t kw){
     if(_enum == kw){    \
         return _name;                           \
     }
-    #include "math/expr_kw_defines.h"
+    #include "expr/expr_kw_defines.h"
     #undef EXPR_KW_DEF
     return "BADKW";
 }
@@ -51,7 +51,7 @@ ExprElem scanExprElem (FILE* file, char c, char* buffer){
     if(strcmp(buffer, _name) == 0){    \
         kw = _enum;                             \
     }
-    #include "math/expr_kw_defines.h"
+    #include "expr/expr_kw_defines.h"
     #undef EXPR_KW_DEF
 
     if(kw != EXPR_KW_NOTKW){
@@ -71,7 +71,7 @@ void printExprElem(FILE* file, ExprElem elem){
         fprintf(file, "PAIN");
         break;
     case EXPR_OP:
-        fprintf(file, mathOpName(elem.op));
+        fprintf(file, exprOpName(elem.op));
         break;
     case EXPR_CONST:
         fprintf(file, "%lg", elem.val);

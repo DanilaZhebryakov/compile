@@ -37,8 +37,19 @@
 		</Compiler>
 		<Unit filename="compile_backend.cpp" />
 		<Unit filename="compile_backend.h" />
-		<Unit filename="compile_midend.cpp" />
+		<Unit filename="compile_midend.cpp">
+			<Option compile="0" />
+			<Option link="0" />
+		</Unit>
 		<Unit filename="compile_midend.h" />
+		<Unit filename="expr/expr_elem.cpp" />
+		<Unit filename="expr/expr_elem.h" />
+		<Unit filename="expr/expr_kw_defines.h" />
+		<Unit filename="expr/expr_op.cpp" />
+		<Unit filename="expr/expr_op.h" />
+		<Unit filename="expr/expr_op_defines.h" />
+		<Unit filename="expr/formule_utils.cpp" />
+		<Unit filename="expr/formule_utils.h" />
 		<Unit filename="lib/Console_utils.h" />
 		<Unit filename="lib/Console_utils_win.cpp" />
 		<Unit filename="lib/Stack.cpp" />
@@ -63,14 +74,6 @@
 		<Unit filename="lib/time_utils.cpp" />
 		<Unit filename="lib/time_utils.h" />
 		<Unit filename="main.cpp" />
-		<Unit filename="math/expr_elem.cpp" />
-		<Unit filename="math/expr_elem.h" />
-		<Unit filename="math/expr_kw_defines.h" />
-		<Unit filename="math/expr_op.cpp" />
-		<Unit filename="math/expr_op.h" />
-		<Unit filename="math/expr_op_defines.h" />
-		<Unit filename="math/formule_utils.cpp" />
-		<Unit filename="math/formule_utils.h" />
 		<Unit filename="program_structure.cpp" />
 		<Unit filename="program_structure.h" />
 		<Unit filename="syntax_analyser.cpp" />

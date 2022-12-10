@@ -79,7 +79,7 @@ void programAddNewMem(ProgramPosData* data, void* mem){
     }
 }
 void programPosDataDtor(ProgramPosData* data){
-    for(void** i = (void**)data->add_mem.data; i < data->add_mem.data + data->add_mem.size; i++){
+    for(void** i = (void**)data->add_mem.data; i < (void**)data->add_mem.data + data->add_mem.size; i++){
         free(*i);
     }
     ustackDtor(&(data->add_mem));
