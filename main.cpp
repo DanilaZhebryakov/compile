@@ -10,10 +10,10 @@ int main()
     FILE* input_file = fopen("input.txt", "r");
     fscanf(input_file, "%*[^#]");
     fgetc(input_file);
-    BinTreeNode* expr = scanProgram(input_file);
+    BinTreeNode* prog = scanProgram(input_file);
     fclose(input_file);
-    BinTreeNode* prog = exprReplaceKW(expr);
-    binTreeDtor(expr);
+    //BinTreeNode* prog = exprReplaceKW(expr);
+    //binTreeDtor(expr);
 
     binTreeDump(prog);
     FILE* out_file = fopen("program.txt", "w");

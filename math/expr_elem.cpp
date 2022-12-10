@@ -46,6 +46,19 @@ ExprElem scanExprElem (FILE* file, char c, char* buffer){
         ret.type = EXPR_PAIN;
         return ret;
     }
+    exprKWType_t kw = EXPR_KW_NOTKW;
+    #define EXPR_KW_DEF(_enum, _enumval, _name) \
+    if(strcmp(buffer, _name) == 0){    \
+        kw = _enum;                             \
+    }
+    #include "math/expr_kw_defines.h"
+    #undef EXPR_KW_DEF
+
+    if(kw != EXPR_KW_NOTKW){
+        ret.type = EXPR_KVAR;
+        ret.kword = kw;
+        return ret;
+    }
 
     ret.type = EXPR_VAR;
     ret.name = strdup(buffer);
