@@ -10,19 +10,26 @@
 fprintf(file, __VA_ARGS__)
 
 static const int BASE_BUFF_SIZE = 1000;
+static const int RBP_BASE_POS = 99;
 
-static void compileFuncCall(FILE* file, ProgramPosData* pos, int nargs){
+static void compileFuncCall(FILE* file, ProgramPosData* pos, int nargs, bool ret_val, int func_flvl){
     ASM_OUT("#call of func\n");
+    ASM_OUT("push [%d]\n", RBP_BASE_POS - func_flvl);
     ASM_OUT("push rbp\n");
     ASM_OUT("push %d \n", pos->rbp_offset);
     ASM_OUT("add\n"       );
+    ASM_OUT("dup\n"       );
+    ASM_OUT("pop [%d]\n", RBP_BASE_POS - func_flvl);
     ASM_OUT("pop rbp\n"   );
 
     for(int i = nargs-1; i >= 0; i--){// args are read backwards because stack
         ASM_OUT("pop [rbp + %d]\n", i);
     }
     ASM_OUT("call rax\n");
-
+    if(ret_val){
+        ASM_OUT("swap\n");
+    }
+    ASM_OUT("pop [%d]\n", RBP_BASE_POS - func_flvl);
     ASM_OUT("push rbp\n");
     ASM_OUT("push %d \n", pos->rbp_offset);
     ASM_OUT("sub\n"       );
@@ -46,7 +53,7 @@ static void compileFuncCall(FILE* file, ProgramPosData* pos, int nargs){
         }                                                       \
         pos->lvl++;                                             \
         __VA_ARGS__                                             \
-        programDescendLvl(objs, pos->lvl);                      \
+        programDescendLvl(objs, pos, pos->lvl);                 \
         pos->lvl--;                                             \
         if(_req_val){                                           \
             ASM_OUT("eocb_%d:\n", pos->code_block_id);    \
@@ -213,7 +220,7 @@ static bool compileSetDst(F_DEF_ARGS, bool create_vars = false){
         if(vfunc){
             ASM_OUT("push :%s\n", vfunc->value.lbl);
             ASM_OUT("pop rax\n");
-            compileFuncCall(file, pos, 1);
+            compileFuncCall(file, pos, 1, false, vfunc->fdepth);
             if(req_val)
                 compileCode(F_ARGS(expr), true);
         }
@@ -222,12 +229,24 @@ static bool compileSetDst(F_DEF_ARGS, bool create_vars = false){
                 ASM_OUT("dup\n");
                 pos->stack_size++;
             }
-            VarEntry* var = create_vars ? varTableCreate(objs->vars, expr->data.name, pos->lvl) : varTableGet(objs->vars, expr->data.name);
+            if(create_vars){
+                varTablePut(objs->vars, {pos->rbp_offset + 1,  expr->data.name, pos->lvl, pos->flvl});
+                pos->rbp_offset++;
+            }
+            VarEntry* var = varTableGet(objs->vars, expr->data.name);
+
             if(!var){
                 error_log("Assignment var %s not found\n", expr->data.name);
                 return false;
             }
-            ASM_OUT("pop [rbp + %d]\n", var->value);
+            if(var->fdepth == pos->flvl){
+                ASM_OUT("pop [rbp + %d]\n", var->value);
+            }
+            else{
+                ASM_OUT("push [%d]\n", RBP_BASE_POS - var->fdepth);
+                ASM_OUT("pop rax\n");
+                ASM_OUT("pop [rax + %d]\n", var->value);
+            }
         }
         return true;
     }
@@ -284,6 +303,10 @@ static bool compileFuncDef(F_DEF_ARGS){
     if(!(expr->left && expr->left->data.type == EXPR_VAR))
         return false;
 
+    pos->flvl++;
+    int old_offset = pos->rbp_offset;
+    pos->rbp_offset = 0;
+
     char name_buff[BASE_BUFF_SIZE] = "";
     sprintf(name_buff, "%s_%s_%d",var_func ? "v-function": "function", expr->left->data.name, pos->lbl_id);
     pos->lbl_id++;
@@ -294,7 +317,7 @@ static bool compileFuncDef(F_DEF_ARGS){
 
     if(!(expr->right && expr->right->data.type == EXPR_OP && expr->right->data.op == EXPR_O_SEP)){
         if(var_func){
-            vfuncTablePut(objs->vfuncs, {{name_str, false}, (expr->left->data.name), (pos->lvl)});
+            vfuncTablePut(objs->vfuncs, {{name_str, false}, (expr->left->data.name), (pos->lvl), (pos->flvl)});
             COMPILE_CODE_BLOCK( true, //force-apply RCB
                 if(!compileCode(F_ARGS(expr->right), true))
                     return false;
@@ -308,9 +331,9 @@ static bool compileFuncDef(F_DEF_ARGS){
     }
     else{
         if(var_func)
-            vfuncTablePut(objs->vfuncs, {{name_str, false}, (expr->left->data.name), (pos->lvl)});
+            vfuncTablePut(objs->vfuncs, {{name_str, false}, (expr->left->data.name), (pos->lvl), (pos->flvl)});
         else
-            funcTablePut(objs->funcs  , {{name_str}       , (expr->left->data.name), (pos->lvl)});
+            funcTablePut(objs->funcs  , {{name_str}       , (expr->left->data.name), (pos->lvl), (pos->flvl)});
 
         // function with its arguments is just compiled into one returnable code block
         COMPILE_CODE_BLOCK( true,
@@ -320,9 +343,11 @@ static bool compileFuncDef(F_DEF_ARGS){
                 return false;
         )
     }
+    pos->rbp_offset = old_offset;
     ASM_OUT("swap\n");// function code, being RCB puts a result on a stack. Return adress is under it
     ASM_OUT("ret\n");
     ASM_OUT("%s*skip:\n", name_buff);
+    pos->flvl--;
     return true;
 }
 
@@ -338,7 +363,7 @@ static bool compileCode(F_DEF_ARGS){
         if(vfunc){
             ASM_OUT("push :%s\n", vfunc->value.lbl);
             ASM_OUT("pop rax\n");
-            compileFuncCall(file, pos, 0);
+            compileFuncCall(file, pos, 0, true, vfunc->fdepth);
             if(!req_val){
                 ASM_OUT("pop rnn\n");
             }
@@ -350,7 +375,14 @@ static bool compileCode(F_DEF_ARGS){
                 error_log("Var \"%s\" not found\n", expr->data.name);
                 return false;
             }
-            ASM_OUT("push [rbp + %d]\n", varTableGet(objs->vars, expr->data.name)->value);
+            if(var->fdepth == pos->flvl){
+                ASM_OUT("push [rbp + %d]\n", var->value);
+            }
+            else{
+                ASM_OUT("push [%d]\n", RBP_BASE_POS - var->fdepth);
+                ASM_OUT("pop rax\n");
+                ASM_OUT("push [rax + %d]\n", var->value);
+            }
         }
         return true;
     }
@@ -394,7 +426,7 @@ static bool compileCode(F_DEF_ARGS){
         }
         ASM_OUT("push :%s\n", func->value.lbl);
         ASM_OUT("pop rax\n");
-        compileFuncCall(file, pos, nargs);
+        compileFuncCall(file, pos, nargs, true, func->fdepth);
         if(!req_val)
             ASM_OUT("pop rnn\n");
         return true;
@@ -493,6 +525,8 @@ bool compileProgram(FILE* file, BinTreeNode* code){
     programNameTableCtor(&objs);
     programPosDataCtor(&pos);
 
+    ASM_OUT("push 0\n");
+    ASM_OUT("pop rbp\n");
     return compileCodeBlock(file, code, &objs, &pos, false);
 
     programNameTableDtor(&objs);

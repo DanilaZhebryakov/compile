@@ -35,16 +35,17 @@ void programNameTableCtor(ProgramNameTable* table);
 
 void programNameTableDtor(ProgramNameTable* table);
 
-void programDescendLvl(ProgramNameTable* objs, int lvl);
-
 struct ProgramPosData{
     int lvl;
+    int flvl;
     int lbl_id;
     int stack_size;
     int rbp_offset;
     int code_block_id;
     UStack add_mem;
 };
+
+void programDescendLvl(ProgramNameTable* objs, ProgramPosData* pos, int lvl);
 
 void programPosDataCtor(ProgramPosData* data);
 void programAddNewMem(ProgramPosData* data, void* mem);

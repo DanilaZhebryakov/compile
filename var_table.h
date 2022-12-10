@@ -8,6 +8,7 @@
         tableType value;    \
         char*  name;    \
         int depth;  \
+        int fdepth;  \
     };  \
     typedef UStack TableName##Table;    \
     \
@@ -16,7 +17,7 @@
     bool tableName##TablePut(TableName##Table* stk, TableName##Entry var);                  \
     TableName##Entry* tableName##TableGet(TableName##Table* stk, char* s_name);             \
     TableName##Entry* tableName##TableGetLast(TableName##Table* stk);                       \
-    void tableName##TableDescendLvl(TableName##Table* stk, int lvl);
+    int tableName##TableDescendLvl(TableName##Table* stk, int lvl);
 
 
 #define DEF_VAR_TABLE(TableName , tableName, tableType) \
@@ -34,7 +35,7 @@ bool tableName##TablePut(TableName##Table* stk, TableName##Entry var){\
 }\
 \
 TableName##Entry* tableName##TableGet(TableName##Table* stk, char* s_name){\
-    for (TableName##Entry* i = (TableName##Entry*)stk->data; i < ((TableName##Entry*)stk->data) + stk->size; i++){\
+    for (TableName##Entry* i = (TableName##Entry*)stk->data + stk->size - 1; i >= ((TableName##Entry*)stk->data); i--){\
         if(strcmp(i->name, s_name) == 0){\
             return i;\
         }\
@@ -46,8 +47,10 @@ TableName##Entry* tableName##TableGetLast(TableName##Table* stk){\
     return ((TableName##Entry*)stk->data) + stk->size - 1;\
 }\
 \
-void tableName##TableDescendLvl(TableName##Table* stk, int lvl){\
-    while(stk->size > 0 && (((TableName##Entry*)stk->data) + stk->size - 1)->depth >= lvl && (ustackPop(stk, nullptr) == VAR_NOERROR)) {}\
+int tableName##TableDescendLvl(TableName##Table* stk, int lvl){\
+    int ret = 0;\
+    while(stk->size > 0 && (((TableName##Entry*)stk->data) + stk->size - 1)->depth >= lvl && (ustackPop(stk, nullptr) == VAR_NOERROR)) {ret++;}\
+    return ret;\
 }\
 
 #endif // VAR_TABLE_H_INCLUDED

@@ -12,11 +12,6 @@ int varTableGetNewAddr(VarTable* stk){
     return varTableGetLast(stk)->value + 1;
 }
 
-VarEntry* varTableCreate(VarTable* stk, char* s_name, int lvl){
-    varTablePut(stk, {varTableGetNewAddr(stk), s_name, lvl});
-    return varTableGetLast(stk);
-}
-
 void programNameTableCtor(ProgramNameTable* table){
     table->vars   = (VarTable*)malloc(sizeof(*table->vars));
     table->consts = (ConstTable*)malloc(sizeof(*table->consts));
@@ -41,8 +36,8 @@ void programNameTableDtor(ProgramNameTable* table){
     free(table->vfuncs);
 }
 
-void programDescendLvl(ProgramNameTable* objs, int lvl){
-    varTableDescendLvl  (objs->vars   , lvl);
+void programDescendLvl(ProgramNameTable* objs, ProgramPosData* pos, int lvl){
+    pos->rbp_offset -= varTableDescendLvl  (objs->vars   , lvl);
     constTableDescendLvl(objs->consts , lvl);
     varTableDescendLvl  (objs->funcs  , lvl);
     vfuncTableDescendLvl(objs->vfuncs , lvl);
@@ -59,9 +54,10 @@ VFuncEntry* vfuncTableGetRW(VFuncTable* stk, const char* name, bool write){
 
 void programPosDataCtor(ProgramPosData* data){
     data->lvl = 0;
+    data->flvl = 0;
     data->lbl_id = 1;
     data->stack_size = 0;
-    data->rbp_offset = 0;
+    data->rbp_offset = 1;
     data->code_block_id = -1;
     ustackCtor(&(data->add_mem), sizeof(void*));
 }
