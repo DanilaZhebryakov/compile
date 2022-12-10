@@ -37,16 +37,28 @@
 
 static BINTREE_ELEM_T readElem(FILE* file){
     char c = fgetc(file);
+    bool func = c == '#';
+    if(func)
+        c = fgetc(file);
     ungetc(c, file);
-
     char* buffer = (char*)calloc(MAX_FORM_WORD_LEN, sizeof(char));
     ExprElem elem = scanExprElem(file, c, buffer);
     free(buffer);
-
+    fgetc(file);
+    if(func){
+        if(elem.type == EXPR_VAR)
+            elem.type = EXPR_FUNC;
+        else{
+            error_log("Bad element marked as function\n");
+        }
+    }
     return elem;
 }
 
 static void dumpElem(FILE* file, const BINTREE_ELEM_T* elem){
+    if(elem->type == EXPR_FUNC){
+        fputc('#', file);
+    }
     printExprElem(file, *elem);
 }
 
