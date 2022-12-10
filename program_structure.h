@@ -45,6 +45,8 @@ struct ProgramPosData{
     UStack add_mem;
 };
 
+void programCreateVar(ProgramNameTable* objs, ProgramPosData* pos, const char* name);
+
 void programDescendLvl(ProgramNameTable* objs, ProgramPosData* pos, int lvl);
 
 void programPosDataCtor(ProgramPosData* data);

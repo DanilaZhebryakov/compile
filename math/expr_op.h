@@ -19,6 +19,8 @@ bool isExprOpUnary(exprOpType_t op);
 
 bool isMathOp(exprOpType_t op);
 
+bool isAssignOp(exprOpType_t op);
+
 bool canExprOpBeUnary(exprOpType_t op);
 
 bool canExprOpBeUnaryL(exprOpType_t op);

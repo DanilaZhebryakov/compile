@@ -6,7 +6,7 @@
 #define INC_VAR_TABLE(TableName , tableName, tableType) \
     struct TableName##Entry{    \
         tableType value;    \
-        char*  name;    \
+        const char*  name;  \
         int depth;  \
         int fdepth;  \
     };  \

@@ -14,18 +14,22 @@ static const int RBP_BASE_POS = 99;
 
 static void compileFuncCall(FILE* file, ProgramPosData* pos, int nargs, bool ret_val, int func_flvl){
     ASM_OUT("#call of func\n");
-    ASM_OUT("push [%d]\n", RBP_BASE_POS - func_flvl);
     ASM_OUT("push rbp\n");
     ASM_OUT("push %d \n", pos->rbp_offset);
     ASM_OUT("add\n"       );
-    ASM_OUT("dup\n"       );
-    ASM_OUT("pop [%d]\n", RBP_BASE_POS - func_flvl);
     ASM_OUT("pop rbp\n"   );
 
     for(int i = nargs-1; i >= 0; i--){// args are read backwards because stack
         ASM_OUT("pop [rbp + %d]\n", i);
     }
+
+    //save old element of rbp level table to stack. Then overwrite.
+    ASM_OUT("push [%d]\n", RBP_BASE_POS - func_flvl);
+    ASM_OUT("push rbp\n" , RBP_BASE_POS - func_flvl);
+    ASM_OUT("pop [%d]\n" , RBP_BASE_POS - func_flvl);
+
     ASM_OUT("call rax\n");
+
     if(ret_val){
         ASM_OUT("swap\n");
     }
@@ -230,8 +234,7 @@ static bool compileSetDst(F_DEF_ARGS, bool create_vars = false){
                 pos->stack_size++;
             }
             if(create_vars){
-                varTablePut(objs->vars, {pos->rbp_offset + 1,  expr->data.name, pos->lvl, pos->flvl});
-                pos->rbp_offset++;
+                programCreateVar(objs, pos, expr->data.name);
             }
             VarEntry* var = varTableGet(objs->vars, expr->data.name);
 
@@ -294,7 +297,30 @@ static bool compileSetVar(F_DEF_ARGS, bool create_vars = false){
     }
     ASM_OUT("#Esrc:\n");
     return compileSetDst(F_ARGS(dst), req_val, create_vars);
+}
 
+static bool compileVarDef(F_DEF_ARGS){
+    if(!expr){
+        return true;
+    }
+    if(expr->data.type == EXPR_VAR){
+        programCreateVar(objs, pos, expr->data.name);
+        return true;
+    }
+    if(expr->data.type == EXPR_OP){
+        if(isAssignOp(expr->data.op)){
+            return compileSetVar(F_ARGS(expr), false, true);
+        }
+        if(expr->data.op == EXPR_O_COMMA){
+            CHECK(compileVarDef(F_ARGS(expr->left) , false));
+            CHECK(compileVarDef(F_ARGS(expr->right), false));
+            return true;
+        }
+    }
+    error_log("Invalid elem for var def:");
+    printExprElem(_logfile, expr->data);
+    printExprElem(stderr  , expr->data);
+    printf_log("\n");
 }
 
 static bool compileFuncDef(F_DEF_ARGS){
@@ -493,7 +519,7 @@ static bool compileCode(F_DEF_ARGS){
                 error_log("var definition can not return a value\n");
                 return false;
             }
-            return compileSetVar(F_ARGS(expr->right), false, true);
+            return compileVarDef(F_ARGS(expr->right), false);
         case EXPR_O_FDEF:
             if(req_val){
                 error_log("function definition can not return a value\n");
@@ -527,6 +553,8 @@ bool compileProgram(FILE* file, BinTreeNode* code){
 
     ASM_OUT("push 0\n");
     ASM_OUT("pop rbp\n");
+    ASM_OUT("push 0\n");
+    ASM_OUT("pop [%d]\n", RBP_BASE_POS);
     return compileCodeBlock(file, code, &objs, &pos, false);
 
     programNameTableDtor(&objs);

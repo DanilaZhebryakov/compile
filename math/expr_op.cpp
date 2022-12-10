@@ -23,6 +23,9 @@ bool isExprOpUnary(exprOpType_t op){
 bool isMathOp(exprOpType_t op){
     return(op & EXPR_O_MATH);
 }
+bool isAssignOp(exprOpType_t op){
+    return(op == EXPR_O_EQRTL || op == EXPR_O_EQLTR);
+}
 
 static const int opcount = sizeof(oplist) / sizeof(MathOp);
 

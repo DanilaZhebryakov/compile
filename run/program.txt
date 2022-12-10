@@ -1,10 +1,12 @@
 push 0
 pop rbp
+push 0
+pop [99]
 #{
 #src:
 push 100
 #Esrc:
-pop [rbp + 2]
+pop [rbp + 0]
 jmp :function_hell_1*skip
 function_hell_1:
 #{
@@ -16,7 +18,15 @@ out
 #src:
 push [99]
 pop rax
-push [rax + 2]
+push [rax + 0]
+#Esrc:
+out
+#src:
+push [rbp + 0]
+#Esrc:
+out
+#src:
+push [rbp + 1]
 #Esrc:
 out
 eocb_2:
@@ -40,21 +50,25 @@ push rax
 swap
 ret
 v-function_ans_3*skip:
+push 13
+push 11
 push :function_hell_1
 pop rax
 #call of func
+push rbp
+push 1 
+add
+pop rbp
+pop [rbp + 1]
+pop [rbp + 0]
 push [98]
 push rbp
-push 2 
-add
-dup
 pop [98]
-pop rbp
 call rax
 swap
 pop [98]
 push rbp
-push 2 
+push 1 
 sub
 pop rbp
 #end of func call

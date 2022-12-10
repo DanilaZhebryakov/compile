@@ -1,5 +1,7 @@
 #include "program_structure.h"
 
+#define LOG_VARS
+
 DEF_VAR_TABLE(Var  , var  , int          );
 DEF_VAR_TABLE(Const, const, BinTreeNode* );
 DEF_VAR_TABLE(Func , func , FuncData     );
@@ -57,10 +59,19 @@ void programPosDataCtor(ProgramPosData* data){
     data->flvl = 0;
     data->lbl_id = 1;
     data->stack_size = 0;
-    data->rbp_offset = 1;
+    data->rbp_offset = 0;
     data->code_block_id = -1;
     ustackCtor(&(data->add_mem), sizeof(void*));
 }
+
+void programCreateVar(ProgramNameTable* objs, ProgramPosData* pos, const char* name){
+    varTablePut(objs->vars, {pos->rbp_offset, name, pos->lvl, pos->flvl});
+    #ifdef LOG_VARS
+    printf_log("Var:%s Level:%d Flevel:%d Addr:%d\n", name, pos->lvl, pos->flvl, pos->rbp_offset);
+    #endif
+    pos->rbp_offset++;
+}
+
 void programAddNewMem(ProgramPosData* data, void* mem){
     if(ustackPush(&(data->add_mem), &mem) != VAR_NOERROR){
         Error_log("%s", "Bad stack push\n");
