@@ -4,7 +4,6 @@
 
 #include "expr_elem.h"
 #include "lib/bintree.h"
-#include "var_table.h"
 
 static BinTreeNode* newBadNode(){
     ExprElem elem = {};

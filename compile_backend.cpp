@@ -1,7 +1,6 @@
 #include "lib/bintree.h"
 #include "expr/expr_elem.h"
-#include "var_table.h"
-#include "program_structure.h"
+#include "program/program_structure.h"
 
 #define F_ARGS(...) file, __VA_ARGS__ , objs, pos
 #define F_DEF_ARGS FILE* file, BinTreeNode* expr , ProgramNameTable* objs, ProgramPosData* pos, bool req_val

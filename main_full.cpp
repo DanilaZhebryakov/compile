@@ -14,20 +14,14 @@ int main()
     fclose(input_file);
     binTreeDump(prog);
 
-    FILE* tree_file = fopen("program_tree.txt", "w");
-    binTreePrintToFile(prog, tree_file);
-    fclose(tree_file);
-    tree_file = fopen("program_tree.txt", "r");
-    BinTreeNode* prog_n = binTreeReadFromFile(tree_file);
-    fclose(tree_file);
-    binTreeDump(prog_n);
-
+    if(!prog)
+        return 2;
 
     FILE* out_file = fopen("program.txt", "w");
-    bool res = compileProgram(out_file, prog_n);
+    bool res = compileProgram(out_file, prog);
     fclose(out_file);
     binTreeDtor(prog);
-    binTreeDtor(prog_n);
-    printf_log("\n%d\n", res);
-    system("run_code.bat");
+    if(res)
+        system("run_code.bat");
+    return res ? 0:1;
 }
