@@ -4,6 +4,15 @@
 #include "expr_elem.h"
 #include "lib/bintree.h"
 
+const char* getExprKWName(exprKWType_t kw){
+    #define EXPR_KW_DEF(_enum, _enumval, _name) \
+    if(_enum == kw){    \
+        return _name;                           \
+    }
+    #include "math/expr_kw_defines.h"
+    #undef EXPR_KW_DEF
+    return "BADKW";
+}
 
 
 ExprElem scanExprElem (FILE* file, char c, char* buffer){
@@ -62,6 +71,9 @@ void printExprElem(FILE* file, ExprElem elem){
         break;
     case EXPR_CNTRL:
         fprintf(file, "$%c", elem.chr);
+        break;
+    case EXPR_KVAR:
+        fprintf(file, "%s", getExprKWName(elem.kword));
         break;
     default:
         fprintf(file, "TRASH");

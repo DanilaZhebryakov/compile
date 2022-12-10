@@ -13,7 +13,7 @@
     \
     void tableName##TableCtor(TableName##Table* stk);                               \
     void tableName##TableDtor(TableName##Table* stk);                               \
-    bool tableName##TablePut(TableName##Table* stk, VarEntry var);                  \
+    bool tableName##TablePut(TableName##Table* stk, TableName##Entry var);                  \
     TableName##Entry* tableName##TableGet(TableName##Table* stk, char* s_name);             \
     TableName##Entry* tableName##TableGetLast(TableName##Table* stk);                       \
     void tableName##TableDescendLvl(TableName##Table* stk, int lvl);
@@ -29,7 +29,7 @@ void tableName##TableDtor(TableName##Table* stk){\
     ustackDtor(stk);\
 }\
 \
-bool tableName##TablePut(TableName##Table* stk, VarEntry var){\
+bool tableName##TablePut(TableName##Table* stk, TableName##Entry var){\
     return ustackPush(stk, &var) == VAR_NOERROR;\
 }\
 \

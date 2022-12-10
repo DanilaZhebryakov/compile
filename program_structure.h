@@ -5,12 +5,17 @@
 #include "lib/bintree.h"
 
 struct VarFuncData{
-    int addr;
+    char* lbl;
     bool write;
+};
+
+struct FuncData{
+    char* lbl;
 };
 
 INC_VAR_TABLE(Var  , var  , int          );
 INC_VAR_TABLE(Const, const, BinTreeNode* );
+INC_VAR_TABLE(Func , func , FuncData     );
 INC_VAR_TABLE(VFunc, vfunc, VarFuncData  );
 
 int varTableGetNewAddr(VarTable* stk);
@@ -20,7 +25,7 @@ VarEntry* varTableCreate(VarTable* stk, char* s_name, int lvl);
 struct ProgramNameTable{
     VarTable* vars;
     ConstTable* consts;
-    VarTable* funcs;
+    FuncTable* funcs;
     VFuncTable* vfuncs;
 };
 
@@ -38,8 +43,11 @@ struct ProgramPosData{
     int stack_size;
     int rbp_offset;
     int code_block_id;
+    UStack add_mem;
 };
 
 void programPosDataCtor(ProgramPosData* data);
+void programAddNewMem(ProgramPosData* data, void* mem);
+void programPosDataDtor(ProgramPosData* data);
 
 #endif // PROGRAM_STRUCTURE_H_INCLUDED

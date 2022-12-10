@@ -105,6 +105,10 @@ static bool isEndOfExpr(ExprElem* elem_buffer){
 
 static bool scanMathExpr_(FILE* file, BinTreeNode** tree_place, char* buffer, ExprElem* elem_buffer, int priority){
     assert_log(tree_place != nullptr);
+    if (isEndOfExpr(elem_buffer)){
+        *tree_place = nullptr;
+        return true;
+    }
 
     if (priority > MAX_EXPR_OP_PRIORITY){
         return scanMathPExpr_(file, tree_place, buffer, elem_buffer);

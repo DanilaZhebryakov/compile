@@ -1,0 +1,93 @@
+#{
+jmp :function_hell_1*skip
+function_hell_1:
+#{
+#begin of rcb 2
+#src:
+push 666
+#Esrc:
+out
+eocb_2:
+push rax
+#}
+swap
+ret
+function_hell_1*skip:
+jmp :v-function_ans_3*skip
+v-function_ans_3:
+#{
+#begin of rcb 4
+#src:
+push 42
+#Esrc:
+pop rax
+jmp :eocb_4
+eocb_4:
+push rax
+#}
+swap
+ret
+v-function_ans_3*skip:
+#src:
+push 100
+#Esrc:
+pop [rbp + 1]
+#src:
+push :v-function_ans_3
+pop rax
+#call of func
+push rbp
+push 0 
+add
+pop rbp
+call rax
+push rbp
+push 0 
+sub
+pop rbp
+#end of func call
+push 3
+add
+#Esrc:
+out
+push :function_hell_1
+pop rax
+#call of func
+push rbp
+push 0 
+add
+pop rbp
+call rax
+push rbp
+push 0 
+sub
+pop rbp
+#end of func call
+pop rnn
+push [rbp + 1]
+push 0
+jeq :if_5
+#src:
+push 222
+#Esrc:
+out
+if_5:
+while_6_beg:
+push [rbp + 1]
+push 0
+jeq :while_6_end
+#{
+#src:
+push [rbp + 1]
+push 1
+sub
+#Esrc:
+pop [rbp + 1]
+#src:
+push [rbp + 1]
+#Esrc:
+out
+#}
+jmp :while_6_beg
+while_6_end:
+#}

@@ -8,6 +8,7 @@
 		<Build>
 			<Target title="Debug">
 				<Option output="bin/Debug/compiler" prefix_auto="1" extension_auto="1" />
+				<Option working_dir="run" />
 				<Option object_output="obj/Debug/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
@@ -17,6 +18,7 @@
 			</Target>
 			<Target title="Release">
 				<Option output="bin/Release/compiler" prefix_auto="1" extension_auto="1" />
+				<Option working_dir="run" />
 				<Option object_output="obj/Release/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
@@ -36,6 +38,7 @@
 		<Unit filename="compile_backend.cpp" />
 		<Unit filename="compile_backend.h" />
 		<Unit filename="compile_midend.cpp" />
+		<Unit filename="compile_midend.h" />
 		<Unit filename="lib/Console_utils.h" />
 		<Unit filename="lib/Console_utils_win.cpp" />
 		<Unit filename="lib/Stack.cpp" />
@@ -62,6 +65,7 @@
 		<Unit filename="main.cpp" />
 		<Unit filename="math/expr_elem.cpp" />
 		<Unit filename="math/expr_elem.h" />
+		<Unit filename="math/expr_kw_defines.h" />
 		<Unit filename="math/expr_op.cpp" />
 		<Unit filename="math/expr_op.h" />
 		<Unit filename="math/expr_op_defines.h" />

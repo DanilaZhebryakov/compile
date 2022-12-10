@@ -2,6 +2,7 @@
 
 DEF_VAR_TABLE(Var  , var  , int          );
 DEF_VAR_TABLE(Const, const, BinTreeNode* );
+DEF_VAR_TABLE(Func , func , FuncData     );
 DEF_VAR_TABLE(VFunc, vfunc, VarFuncData  );
 
 int varTableGetNewAddr(VarTable* stk){
@@ -62,4 +63,17 @@ void programPosDataCtor(ProgramPosData* data){
     data->stack_size = 0;
     data->rbp_offset = 0;
     data->code_block_id = -1;
+    ustackCtor(&(data->add_mem), sizeof(void*));
+}
+void programAddNewMem(ProgramPosData* data, void* mem){
+    if(ustackPush(&(data->add_mem), &mem) != VAR_NOERROR){
+        Error_log("%s", "Bad stack push\n");
+        ustackDump(&(data->add_mem));
+    }
+}
+void programPosDataDtor(ProgramPosData* data){
+    for(void** i = (void**)data->add_mem.data; i < data->add_mem.data + data->add_mem.size; i++){
+        free(*i);
+    }
+    ustackDtor(&(data->add_mem));
 }
