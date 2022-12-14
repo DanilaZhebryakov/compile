@@ -9,7 +9,7 @@ struct ExprOp{
     int priorirty;
 };
 
-#define EXPR_OP_DEF(_enum, _enumval, _name, _pri, _ret) \
+#define EXPR_OP_DEF(_enum, _enumval, _name, _pri, _ret, _std) \
 {_name, _enum, _pri},
 
 static const ExprOp oplist[] = {
@@ -60,7 +60,19 @@ const char* exprOpName(exprOpType_t op_type){
     return "BADOP";
 }
 
-#define EXPR_OP_DEF(_enum, _enumval, _name, _pri, _ret) \
+#define EXPR_OP_DEF(_enum, _enumval, _name, _pri, _ret, _std) \
+case _enum:\
+    return _std;
+const char* exprStdOpName(exprOpType_t op_type){
+    switch (op_type){
+    #include "expr_op_defines.h"
+    default:
+        return "BADOP";
+    }
+}
+#undef EXPR_OP_DEF
+
+#define EXPR_OP_DEF(_enum, _enumval, _name, _pri, _ret, _std) \
 case _enum:\
     return _ret;
 

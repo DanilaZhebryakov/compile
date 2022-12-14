@@ -457,6 +457,7 @@ binTreeError_t binTreeUpdSize(BinTreeNode* node){
         }
     }
 
+    /*
     #ifdef BINTREE_BACK_LINK
     if (node->up == nullptr){
         return BTREE_NOERROR;
@@ -465,8 +466,10 @@ binTreeError_t binTreeUpdSize(BinTreeNode* node){
     err = binTreeUpdSize(node->up);
     clearNodeUsedFlag(node);
     #endif
+    */
     return BTREE_NOERROR;
 }
+
 #endif
 
 binTreeError_t binTreeAttach(BinTreeNode* subtree, BinTreeNode* att_node, binTreePos_t att_pos){

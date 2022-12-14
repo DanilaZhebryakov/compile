@@ -2,7 +2,7 @@
 #define EXPR_OP_H_INCLUDED
 
 
-#define EXPR_OP_DEF(_enum, _enumval, _name, _pri, _ret) \
+#define EXPR_OP_DEF(_enum, _enumval, _name, _pri, _ret, _std) \
 _enum = _enumval,
 
 enum exprOpType_t{
@@ -28,6 +28,7 @@ bool canExprOpBeUnaryL(exprOpType_t op);
 int getExprOpPriority(exprOpType_t op_type);
 
 const char* exprOpName(exprOpType_t op_type);
+const char* exprStdOpName(exprOpType_t op_type);
 
 exprOpType_t scanExprOp(const char* buffer);
 

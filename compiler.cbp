@@ -16,18 +16,17 @@
 					<Add option="-g" />
 				</Compiler>
 			</Target>
-			<Target title="Release">
-				<Option output="bin/Release/compiler" prefix_auto="1" extension_auto="1" />
+			<Target title="frontend">
+				<Option output="compile_frontend" prefix_auto="1" extension_auto="1" />
 				<Option working_dir="run" />
-				<Option object_output="obj/Release/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
-				<Compiler>
-					<Add option="-O2" />
-				</Compiler>
-				<Linker>
-					<Add option="-s" />
-				</Linker>
+			</Target>
+			<Target title="backend">
+				<Option output="compile_backend" prefix_auto="1" extension_auto="1" />
+				<Option working_dir="run" />
+				<Option type="1" />
+				<Option compiler="gcc" />
 			</Target>
 		</Build>
 		<Compiler>
@@ -35,13 +34,24 @@
 			<Add option="-fexceptions" />
 			<Add directory="../compile" />
 		</Compiler>
-		<Unit filename="compile_backend.cpp" />
-		<Unit filename="compile_backend.h" />
+		<Unit filename="compile_backend.cpp">
+			<Option target="Debug" />
+			<Option target="backend" />
+		</Unit>
+		<Unit filename="compile_backend.h">
+			<Option target="Debug" />
+			<Option target="backend" />
+		</Unit>
 		<Unit filename="compile_midend.cpp">
 			<Option compile="0" />
 			<Option link="0" />
+			<Option target="Debug" />
+			<Option target="backend" />
 		</Unit>
-		<Unit filename="compile_midend.h" />
+		<Unit filename="compile_midend.h">
+			<Option target="Debug" />
+			<Option target="backend" />
+		</Unit>
 		<Unit filename="expr/expr_elem.cpp" />
 		<Unit filename="expr/expr_elem.h" />
 		<Unit filename="expr/expr_kw_defines.h" />
@@ -73,12 +83,39 @@
 		<Unit filename="lib/parseArg.h" />
 		<Unit filename="lib/time_utils.cpp" />
 		<Unit filename="lib/time_utils.h" />
-		<Unit filename="main.cpp" />
-		<Unit filename="program_structure.cpp" />
-		<Unit filename="program_structure.h" />
-		<Unit filename="syntax_analyser.cpp" />
-		<Unit filename="syntax_analyser.h" />
-		<Unit filename="var_table.h" />
+		<Unit filename="main_front.cpp">
+			<Option target="frontend" />
+		</Unit>
+		<Unit filename="main_full.cpp">
+			<Option target="Debug" />
+		</Unit>
+		<Unit filename="main_toasm.cpp">
+			<Option target="backend" />
+		</Unit>
+		<Unit filename="program/program_structure.cpp">
+			<Option target="Debug" />
+			<Option target="backend" />
+		</Unit>
+		<Unit filename="program/program_structure.h">
+			<Option target="Debug" />
+			<Option target="backend" />
+		</Unit>
+		<Unit filename="program/var_table.h">
+			<Option target="Debug" />
+			<Option target="backend" />
+		</Unit>
+		<Unit filename="standartify.cpp">
+			<Option target="frontend" />
+		</Unit>
+		<Unit filename="standartify.h" />
+		<Unit filename="syntax_analyser.cpp">
+			<Option target="Debug" />
+			<Option target="frontend" />
+		</Unit>
+		<Unit filename="syntax_analyser.h">
+			<Option target="Debug" />
+			<Option target="frontend" />
+		</Unit>
 		<Extensions>
 			<lib_finder disable_auto="1" />
 		</Extensions>

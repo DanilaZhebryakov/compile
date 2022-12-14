@@ -5,7 +5,7 @@
 #include "lib/bintree.h"
 
 const char* getExprKWName(exprKWType_t kw){
-    #define EXPR_KW_DEF(_enum, _enumval, _name) \
+    #define EXPR_KW_DEF(_enum, _enumval, _name, _std) \
     if(_enum == kw){    \
         return _name;                           \
     }
@@ -14,6 +14,15 @@ const char* getExprKWName(exprKWType_t kw){
     return "BADKW";
 }
 
+const char* getExprStdKWName(exprKWType_t kw){
+    #define EXPR_KW_DEF(_enum, _enumval, _name, _std) \
+    if(_enum == kw){    \
+        return _std;                           \
+    }
+    #include "expr/expr_kw_defines.h"
+    #undef EXPR_KW_DEF
+    return "BADKW";
+}
 
 ExprElem scanExprElem (FILE* file, char c, char* buffer){
     ExprElem ret = {};
@@ -47,7 +56,7 @@ ExprElem scanExprElem (FILE* file, char c, char* buffer){
         return ret;
     }
     exprKWType_t kw = EXPR_KW_NOTKW;
-    #define EXPR_KW_DEF(_enum, _enumval, _name) \
+    #define EXPR_KW_DEF(_enum, _enumval, _name, _std) \
     if(strcmp(buffer, _name) == 0){    \
         kw = _enum;                             \
     }
@@ -87,6 +96,9 @@ void printExprElem(FILE* file, ExprElem elem){
         break;
     case EXPR_KVAR:
         fprintf(file, "%s", getExprKWName(elem.kword));
+        break;
+    case EXPR_STAND:
+        fprintf(file, "ST%d", elem.stand);
         break;
     default:
         fprintf(file, "TRASH");

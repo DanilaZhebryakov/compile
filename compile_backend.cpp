@@ -384,6 +384,10 @@ static bool compileCode(F_DEF_ARGS){
         }
         return !req_val;
     }
+    if(expr->data.type == EXPR_STAND){
+        error_log("СТАНДАРТ--ГОВНО\n");
+        return false;
+    }
     if(expr->data.type == EXPR_VAR){
         VFuncEntry* vfunc = vfuncTableGetRW(objs->vfuncs, expr->data.name, false);
         if(vfunc){
