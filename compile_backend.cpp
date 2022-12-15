@@ -2,8 +2,8 @@
 #include "expr/expr_elem.h"
 #include "program/program_structure.h"
 
-#define F_ARGS(...) file, __VA_ARGS__ , objs, pos
-#define F_DEF_ARGS FILE* file, BinTreeNode* expr , ProgramNameTable* objs, ProgramPosData* pos, bool req_val
+#define F_ARGS(...) file, __VA_ARGS__ , objs, pos, regs
+#define F_DEF_ARGS FILE* file, BinTreeNode* expr , ProgramNameTable* objs, ProgramPosData* pos, RegInfo* regs, bool req_val
 
 #define ASM_OUT(...) \
 fprintf(file, __VA_ARGS__)
@@ -11,7 +11,52 @@ fprintf(file, __VA_ARGS__)
 static const int BASE_BUFF_SIZE = 1000;
 static const int RBP_BASE_POS = 99;
 
-static void compileFuncCall(FILE* file, ProgramPosData* pos, int nargs, bool ret_val, int func_flvl){
+#define REG_ADD_ARGS FILE* file , ProgramPosData* pos,
+#define REG_ADD_ARGS_CALL file, pos,
+#include "program/reg_info.h"
+static void unloadVarFromReg(REG_ADD_ARGS RegInfo* regs, int reg_n, bool write){
+    assert_log(regs[reg_n].var);
+    fprintf(file, "push r%d\n" , reg_n + REG_USE_FIRST);
+    if(regs[reg_n].var->fdepth == pos->flvl){
+        ASM_OUT("pop [rbp + %d]\n", regs[reg_n].var->value);
+    }
+    else{
+        ASM_OUT("push [%d]\n", RBP_BASE_POS - regs[reg_n].var->fdepth);
+        ASM_OUT("pop rax\n");
+        ASM_OUT("pop [rax + %d]\n", regs[reg_n].var->value);
+    }
+    regs[reg_n].var = nullptr;
+    regs[reg_n].load_prog_lvl = -1;
+    regs[reg_n].load_mem_n = 0;
+}
+static void loadVarToReg(REG_ADD_ARGS RegInfo* regs, int reg_n, VarEntry* var, bool read){
+    ASM_OUT("#Load var %s to reg r%d\n", var->name, reg_n + REG_USE_FIRST);
+    if(read){
+
+        if(var->fdepth == pos->flvl){
+            ASM_OUT("push [rbp + %d]\n", var->value);
+        }
+        else{
+            ASM_OUT("push [%d]\n", RBP_BASE_POS - var->fdepth);
+            ASM_OUT("pop rax\n");
+            ASM_OUT("push [rax + %d]\n", var->value);
+        }
+
+        ASM_OUT("pop r%d\n" , reg_n + REG_USE_FIRST);
+    }
+    regs[reg_n].var = var;
+}
+
+static void compileVarRead(FILE* file, ProgramPosData* pos, RegInfo* regs, VarEntry* var){
+    int reg_n = getRegWithVar(file, pos, regs, var);
+    if(reg_n == -1){
+        reg_n = findRegForVar(file, pos, regs, var, pos->lvl, true);
+    }
+    ASM_OUT("push r%d\n", reg_n + REG_USE_FIRST);
+}
+
+static void compileFuncCall(FILE* file, ProgramPosData* pos, RegInfo* regs, int nargs, bool ret_val, int func_flvl){
+    regsDescendLvl(file, pos, regs, 0, true);
     ASM_OUT("#call of func\n");
     ASM_OUT("push rbp\n");
     ASM_OUT("push %d \n", pos->rbp_offset);
@@ -156,12 +201,13 @@ static bool compileSetDst(F_DEF_ARGS, bool create_vars = false){
             ASM_OUT("push 0\n");
             int if_lbl_id = pos->lbl_id;
             (pos->lbl_id)++;
-
+            regsDescendLvl(file, pos, regs, 0, true);
             if (expr->right->data.type == EXPR_OP && expr->right->data.op == EXPR_O_SEP){
+
                 ASM_OUT("jne :a_if_else_%d\n", if_lbl_id);
                 CHECK( compileSetDst(F_ARGS(expr->right->left ), req_val, create_vars) )
                 ASM_OUT("jmp :a_if_end_%d\n" , if_lbl_id);
-
+                regsDescendLvl(file, pos, regs, 0, true);
                 ASM_OUT("a_if_else_%d:\n", if_lbl_id);
                 CHECK( compileSetDst(F_ARGS(expr->right->right), req_val, create_vars) )
                 ASM_OUT("a_if_end_%d:\n" , if_lbl_id);
@@ -176,6 +222,7 @@ static bool compileSetDst(F_DEF_ARGS, bool create_vars = false){
                     ASM_OUT("pop rnn\n");
                 ASM_OUT("a_if_end_%d:\n", if_lbl_id);
             }
+            regsDescendLvl(file, pos, regs, 0, true);
             return true;
         }
         //return false;
@@ -223,7 +270,7 @@ static bool compileSetDst(F_DEF_ARGS, bool create_vars = false){
         if(vfunc){
             ASM_OUT("push :%s\n", vfunc->value.lbl);
             ASM_OUT("pop rax\n");
-            compileFuncCall(file, pos, 1, false, vfunc->fdepth);
+            compileFuncCall(file, pos, regs, 1, false, vfunc->fdepth);
             if(req_val)
                 compileCode(F_ARGS(expr), true);
         }
@@ -236,19 +283,12 @@ static bool compileSetDst(F_DEF_ARGS, bool create_vars = false){
                 programCreateVar(objs, pos, expr->data.name);
             }
             VarEntry* var = varTableGet(objs->vars, expr->data.name);
-
             if(!var){
                 error_log("Assignment var %s not found\n", expr->data.name);
                 return false;
             }
-            if(var->fdepth == pos->flvl){
-                ASM_OUT("pop [rbp + %d]\n", var->value);
-            }
-            else{
-                ASM_OUT("push [%d]\n", RBP_BASE_POS - var->fdepth);
-                ASM_OUT("pop rax\n");
-                ASM_OUT("pop [rax + %d]\n", var->value);
-            }
+            int reg_n = findRegForVar(file, pos, regs, var, pos->lvl, false);
+            ASM_OUT("pop r%d\n", reg_n + REG_USE_FIRST);
         }
         return true;
     }
@@ -303,7 +343,7 @@ static bool compileVarDef(F_DEF_ARGS){
         return true;
     }
     if(expr->data.type == EXPR_VAR){
-        programCreateVar(objs, pos, expr->data.name);
+        programCreateVar(objs, pos, expr->data.name); // this does not even load it to reg.
         return true;
     }
     if(expr->data.type == EXPR_OP){
@@ -332,6 +372,9 @@ static bool compileFuncDef(F_DEF_ARGS){
     pos->flvl++;
     int old_offset = pos->rbp_offset;
     pos->rbp_offset = 0;
+
+    RegInfo new_regs[16] = {}; // function def does not change registers, but contained code does
+    regs = new_regs;
 
     char name_buff[BASE_BUFF_SIZE] = "";
     sprintf(name_buff, "%s_%s_%d",var_func ? "v-function": "function", expr->left->data.name, pos->lbl_id);
@@ -393,7 +436,7 @@ static bool compileCode(F_DEF_ARGS){
         if(vfunc){
             ASM_OUT("push :%s\n", vfunc->value.lbl);
             ASM_OUT("pop rax\n");
-            compileFuncCall(file, pos, 0, true, vfunc->fdepth);
+            compileFuncCall(file, pos, regs, 0, true, vfunc->fdepth);
             if(!req_val){
                 ASM_OUT("pop rnn\n");
             }
@@ -405,14 +448,7 @@ static bool compileCode(F_DEF_ARGS){
                 error_log("Var \"%s\" not found\n", expr->data.name);
                 return false;
             }
-            if(var->fdepth == pos->flvl){
-                ASM_OUT("push [rbp + %d]\n", var->value);
-            }
-            else{
-                ASM_OUT("push [%d]\n", RBP_BASE_POS - var->fdepth);
-                ASM_OUT("pop rax\n");
-                ASM_OUT("push [rax + %d]\n", var->value);
-            }
+            compileVarRead(file, pos, regs, var);
         }
         return true;
     }
@@ -456,7 +492,7 @@ static bool compileCode(F_DEF_ARGS){
         }
         ASM_OUT("push :%s\n", func->value.lbl);
         ASM_OUT("pop rax\n");
-        compileFuncCall(file, pos, nargs, true, func->fdepth);
+        compileFuncCall(file, pos, regs, nargs, true, func->fdepth);
         if(!req_val)
             ASM_OUT("pop rnn\n");
         return true;
@@ -487,10 +523,13 @@ static bool compileCode(F_DEF_ARGS){
                 error_log("'if' should have both L and R values\n");
                 return false;
             }
+
+            regsDescendLvl(file, pos, regs, 0, true);
             if(expr->right->data.type == EXPR_OP && expr->left->data.op == EXPR_O_SEP){
                 ASM_OUT("jne :if_else_%d\n", instr_lbl_n);
                 CHECK( compileCodeBlock(F_ARGS(expr->right->left ), req_val) )
                 ASM_OUT("jmp :if_end_%d\n" , instr_lbl_n);
+                regsDescendLvl(file, pos, regs, 0, true);
 
                 ASM_OUT("if_else_%d:\n", instr_lbl_n);
                 CHECK( compileCodeBlock(F_ARGS(expr->right->right), req_val) )
@@ -503,16 +542,19 @@ static bool compileCode(F_DEF_ARGS){
                 CHECK( compileCodeBlock(F_ARGS(expr->right), false) )
                 ASM_OUT("if_%d:\n", instr_lbl_n);
             }
+            regsDescendLvl(file, pos, regs, 0, true);
             return true;
         case EXPR_O_WHILE:
             (pos->lbl_id)++;
             ASM_OUT("while_%d_beg:\n", instr_lbl_n);
+            regsDescendLvl(file, pos, regs, 0, true);
             CHECK( compileCodeBlock(F_ARGS(expr->left), true) )
             ASM_OUT("push 0\njeq :while_%d_end\n", instr_lbl_n);
 
             CHECK( compileCodeBlock(F_ARGS(expr->right), false) )
             ASM_OUT("jmp :while_%d_beg\n", instr_lbl_n);
             ASM_OUT("while_%d_end:\n", instr_lbl_n);
+            regsDescendLvl(file, pos, regs, 0, true);
             return true;
         case EXPR_O_EQRTL:
             return compileSetVar(F_ARGS(expr), req_val, false);
@@ -559,7 +601,9 @@ bool compileProgram(FILE* file, BinTreeNode* code){
     ASM_OUT("pop rbp\n");
     ASM_OUT("push 0\n");
     ASM_OUT("pop [%d]\n", RBP_BASE_POS);
-    return compileCodeBlock(file, code, &objs, &pos, false);
+    RegInfo regs[14] = {};
+
+    return compileCodeBlock(file, code, &objs, &pos, regs, false);
 
     programNameTableDtor(&objs);
 }

@@ -9,7 +9,7 @@
 			<Target title="Debug">
 				<Option output="bin/Debug/compiler" prefix_auto="1" extension_auto="1" />
 				<Option working_dir="run" />
-				<Option object_output="obj/Debug/" />
+				<Option object_output="obj" />
 				<Option type="1" />
 				<Option compiler="gcc" />
 				<Compiler>
@@ -19,14 +19,22 @@
 			<Target title="frontend">
 				<Option output="compile_frontend" prefix_auto="1" extension_auto="1" />
 				<Option working_dir="run" />
+				<Option object_output="obj" />
 				<Option type="1" />
 				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-g" />
+				</Compiler>
 			</Target>
 			<Target title="backend">
 				<Option output="compile_backend" prefix_auto="1" extension_auto="1" />
 				<Option working_dir="run" />
+				<Option object_output="obj" />
 				<Option type="1" />
 				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-g" />
+				</Compiler>
 			</Target>
 		</Build>
 		<Compiler>
@@ -97,6 +105,10 @@
 			<Option target="backend" />
 		</Unit>
 		<Unit filename="program/program_structure.h">
+			<Option target="Debug" />
+			<Option target="backend" />
+		</Unit>
+		<Unit filename="program/reg_info.h">
 			<Option target="Debug" />
 			<Option target="backend" />
 		</Unit>

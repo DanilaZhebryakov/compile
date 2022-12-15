@@ -6,22 +6,85 @@ pop [99]
 #src:
 push 100
 #Esrc:
-pop [rbp + 0]
+#Load var x to reg r2
+pop r2
+jmp :function_hell_1*skip
+function_hell_1:
+#{
+#begin of rcb 2
 #src:
-push 630
-#Esrc:
-pop [rbp + 1]
-#src:
-push 65280
-#Esrc:
-pop [rbp + 2]
-#src:
-push [rbp + 0]
-push [rbp + 2]
-push [rbp + 1]
-div
-add
+push 666
 #Esrc:
 out
-bad
+#src:
+#Load var x to reg r2
+push [99]
+pop rax
+push [rax + 0]
+pop r2
+push r2
+#Esrc:
+out
+#src:
+#Load var t1 to reg r3
+push [rbp + 0]
+pop r3
+push r3
+#Esrc:
+out
+#src:
+#Load var t2 to reg r4
+push [rbp + 1]
+pop r4
+push r4
+#Esrc:
+out
+eocb_2:
+push rax
+#}
+swap
+ret
+function_hell_1*skip:
+jmp :v-function_ans_3*skip
+v-function_ans_3:
+#{
+#begin of rcb 4
+#src:
+push 42
+#Esrc:
+pop rax
+jmp :eocb_4
+eocb_4:
+push rax
+#}
+swap
+ret
+v-function_ans_3*skip:
+push 13
+push 11
+push :function_hell_1
+pop rax
+#save
+#reg 2 contains var x (@0)
+push r2
+pop [rbp + 0]
+#call of func
+push rbp
+push 1 
+add
+pop rbp
+pop [rbp + 1]
+pop [rbp + 0]
+push [98]
+push rbp
+pop [98]
+call rax
+swap
+pop [98]
+push rbp
+push 1 
+sub
+pop rbp
+#end of func call
+pop rnn
 #}
