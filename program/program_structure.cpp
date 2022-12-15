@@ -8,7 +8,7 @@ DEF_VAR_TABLE(Func , func , FuncData     );
 DEF_VAR_TABLE(VFunc, vfunc, VarFuncData  );
 
 int varTableGetNewAddr(VarTable* stk){
-    if(stk->size == 0){
+    if (stk->size == 0){
         return 1;
     }
     return varTableGetLast(stk)->value + 1;
@@ -47,7 +47,7 @@ void programDescendLvl(ProgramNameTable* objs, ProgramPosData* pos, int lvl){
 
 VFuncEntry* vfuncTableGetRW(VFuncTable* stk, const char* name, bool write){
     for (VFuncEntry* i = (VFuncEntry*)stk->data; i < ((VFuncEntry*)stk->data) + stk->size; i++){
-        if(strcmp(i->name, name) == 0 && i->value.write == write){
+        if (strcmp(i->name, name) == 0 && i->value.write == write){
             return i;
         }
     }
@@ -73,13 +73,13 @@ void programCreateVar(ProgramNameTable* objs, ProgramPosData* pos, const char* n
 }
 
 void programAddNewMem(ProgramPosData* data, void* mem){
-    if(ustackPush(&(data->add_mem), &mem) != VAR_NOERROR){
+    if (ustackPush(&(data->add_mem), &mem) != VAR_NOERROR){
         Error_log("%s", "Bad stack push\n");
         ustackDump(&(data->add_mem));
     }
 }
 void programPosDataDtor(ProgramPosData* data){
-    for(void** i = (void**)data->add_mem.data; i < (void**)data->add_mem.data + data->add_mem.size; i++){
+    for (void** i = (void**)data->add_mem.data; i < (void**)data->add_mem.data + data->add_mem.size; i++){
         free(*i);
     }
     ustackDtor(&(data->add_mem));

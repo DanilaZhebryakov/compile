@@ -63,8 +63,11 @@ static void compileFuncCall(FILE* file, ProgramPosData* pos, RegInfo* regs, int 
     ASM_OUT("add\n"       );
     ASM_OUT("pop rbp\n"   );
 
-    for(int i = nargs-1; i >= 0; i--){// args are read backwards because stack
-        ASM_OUT("pop [rbp + %d]\n", i);
+    for (int i = nargs-1; i >= 0; i--){// args are read backwards because stack
+        if (i > REG_USE_CNT)
+            ASM_OUT("pop [rbp + %d]\n", i);
+        else
+            ASM_OUT("pop r%d\n", i + REG_USE_FIRST);
     }
 
     //save old element of rbp level table to stack. Then overwrite.
@@ -93,7 +96,7 @@ static void compileFuncCall(FILE* file, ProgramPosData* pos, RegInfo* regs, int 
     {                                                           \
         ASM_OUT("#{\n");                                   \
         int code_block_id_t = 0;                                \
-        if(_req_val){                                           \
+        if (_req_val){                                           \
             code_block_id_t = pos->code_block_id;               \
             pos->code_block_id = pos->lbl_id;                   \
             (pos->lbl_id)++;                                    \
@@ -103,7 +106,7 @@ static void compileFuncCall(FILE* file, ProgramPosData* pos, RegInfo* regs, int 
         __VA_ARGS__                                             \
         programDescendLvl(objs, pos, pos->lvl);                 \
         pos->lvl--;                                             \
-        if(_req_val){                                           \
+        if (_req_val){                                           \
             ASM_OUT("eocb_%d:\n", pos->code_block_id);    \
             pos->code_block_id = code_block_id_t;               \
             ASM_OUT("push rax\n");                        \
@@ -118,9 +121,9 @@ static void compileFuncCall(FILE* file, ProgramPosData* pos, RegInfo* regs, int 
 static bool compileCode(F_DEF_ARGS);
 
 static bool compileCodeBlock(F_DEF_ARGS){
-    if(!expr)
+    if (!expr)
         return !req_val;
-    if(expr->data.type != EXPR_OP || expr->data.op != EXPR_O_ENDL){
+    if (expr->data.type != EXPR_OP || expr->data.op != EXPR_O_ENDL){
         return compileCode(F_ARGS(expr), req_val);
     }
     COMPILE_CODE_BLOCK(req_val,
@@ -134,17 +137,17 @@ static int compileArgList(F_DEF_ARGS){
     if (!expr)
         return 0;
     if  (expr->data.type != EXPR_OP || expr->data.op != EXPR_O_ENDL){
-        if(!compileCodeBlock(F_ARGS(expr), true))
+        if (!compileCodeBlock(F_ARGS(expr), true))
             return -1;
         return 1;
     }
-    if(!compileCodeBlock(F_ARGS(expr->left), true))
+    if (!compileCodeBlock(F_ARGS(expr->left), true))
         return -1;
     return compileArgList(F_ARGS(expr->right), true) + 1;
 }
 
 static bool compileMathOp(F_DEF_ARGS){
-    if(!req_val)
+    if (!req_val)
         return true;
 
     if (!compileCodeBlock(F_ARGS(expr->left), true))
@@ -187,8 +190,8 @@ static bool compileMathOp(F_DEF_ARGS){
 
 static bool compileSetDst(F_DEF_ARGS, bool create_vars = false){
 
-    if(expr->data.type == EXPR_OP){
-        if(expr->data.op == EXPR_O_COMMA){
+    if (expr->data.type == EXPR_OP){
+        if (expr->data.op == EXPR_O_COMMA){
             ASM_OUT("dup\n");
             pos->stack_size++;
             CHECK( compileSetDst(F_ARGS(expr->left), false  , create_vars) )
@@ -196,7 +199,7 @@ static bool compileSetDst(F_DEF_ARGS, bool create_vars = false){
             CHECK( compileSetDst(F_ARGS(expr->right), req_val, create_vars) )
             return true;
         }
-        if(expr->data.op == EXPR_O_IF){
+        if (expr->data.op == EXPR_O_IF){
             CHECK( compileCodeBlock(F_ARGS(expr->left), true) )
             ASM_OUT("push 0\n");
             int if_lbl_id = pos->lbl_id;
@@ -232,19 +235,19 @@ static bool compileSetDst(F_DEF_ARGS, bool create_vars = false){
         switch(expr->data.kword){
         case EXPR_KW_RET:
             ASM_OUT("pop rax\n");
-            for(int i = 0; i < pos->stack_size; i++){
+            for (int i = 0; i < pos->stack_size; i++){
                 ASM_OUT("pop rnn\n");
             }
             ASM_OUT("jmp :eocb_%d\n", pos->code_block_id);
             break;
         case EXPR_KW_NIO:
             ASM_OUT("out\n");
-            if(req_val)
+            if (req_val)
                 ASM_OUT("inp\n");
             break;
         case EXPR_KW_CIO:
             ASM_OUT("outch\n");
-            if(req_val)
+            if (req_val)
                 ASM_OUT("inpch\n");
             break;
         case EXPR_KW_BAD:
@@ -255,7 +258,7 @@ static bool compileSetDst(F_DEF_ARGS, bool create_vars = false){
             return true;
         case EXPR_KW_NULL:
             ASM_OUT("pop rnn\n");
-            if(req_val)
+            if (req_val)
                 ASM_OUT("push 0\n");
             return true;
         default:
@@ -267,23 +270,23 @@ static bool compileSetDst(F_DEF_ARGS, bool create_vars = false){
 
     if(expr->data.type == EXPR_VAR){
         VFuncEntry* vfunc = vfuncTableGetRW(objs->vfuncs, expr->data.name, true);
-        if(vfunc){
+        if (vfunc){
             ASM_OUT("push :%s\n", vfunc->value.lbl);
             ASM_OUT("pop rax\n");
             compileFuncCall(file, pos, regs, 1, false, vfunc->fdepth);
-            if(req_val)
+            if (req_val)
                 compileCode(F_ARGS(expr), true);
         }
         else{
-            if(req_val){
+            if (req_val){
                 ASM_OUT("dup\n");
                 pos->stack_size++;
             }
-            if(create_vars){
+            if (create_vars){
                 programCreateVar(objs, pos, expr->data.name);
             }
             VarEntry* var = varTableGet(objs->vars, expr->data.name);
-            if(!var){
+            if (!var){
                 error_log("Assignment var %s not found\n", expr->data.name);
                 return false;
             }
@@ -300,26 +303,26 @@ static bool compileSetDst(F_DEF_ARGS, bool create_vars = false){
 }
 
 static bool compileSetVar(F_DEF_ARGS, bool create_vars = false){
-    if(!expr){
+    if (!expr){
         error_log("Empty var definition not allowed\n");
         return false;
     }
-    if(expr->data.type != EXPR_OP){
+    if (expr->data.type != EXPR_OP){
         error_log("Bad elem ");
         printExprElem(stdout  , expr->data);
         printExprElem(_logfile, expr->data);
         printf_log("in var assignment\n");
         return false;
     }
-    if(expr->data.op == EXPR_O_COMMA){
-        if(!compileSetVar(F_ARGS(expr->left), false  , create_vars))
+    if (expr->data.op == EXPR_O_COMMA){
+        if (!compileSetVar(F_ARGS(expr->left), false  , create_vars))
             return false;
-        if(!compileSetVar(F_ARGS(expr->left), req_val, create_vars))
+        if (!compileSetVar(F_ARGS(expr->left), req_val, create_vars))
             return false;
         return true;
     }
 
-    if(!(expr->left && expr->right)){
+    if (!(expr->left && expr->right)){
         error_log("Assignment should have both L and R values\n");
         return false;
     }
@@ -339,18 +342,24 @@ static bool compileSetVar(F_DEF_ARGS, bool create_vars = false){
 }
 
 static bool compileVarDef(F_DEF_ARGS){
-    if(!expr){
+    if (!expr){
         return true;
     }
-    if(expr->data.type == EXPR_VAR){
-        programCreateVar(objs, pos, expr->data.name); // this does not even load it to reg.
+    if (expr->data.type == EXPR_VAR){
+        programCreateVar(objs, pos, expr->data.name);
+        int regn = getFreeReg(file, pos, regs);
+        if (regn != -1){// if there is free reg -> 'load', is not -> do nothing
+            loadVarToReg(file, pos, regs, regn, varTableGetLast(objs->vars), false);
+            regs[regn].load_prog_lvl = pos->lvl;
+            regs[regn].load_mem_n = 1;
+        }
         return true;
     }
-    if(expr->data.type == EXPR_OP){
-        if(isAssignOp(expr->data.op)){
+    if (expr->data.type == EXPR_OP){
+        if (isAssignOp(expr->data.op)){
             return compileSetVar(F_ARGS(expr), false, true);
         }
-        if(expr->data.op == EXPR_O_COMMA){
+        if (expr->data.op == EXPR_O_COMMA){
             CHECK(compileVarDef(F_ARGS(expr->left) , false));
             CHECK(compileVarDef(F_ARGS(expr->right), false));
             return true;
@@ -384,11 +393,11 @@ static bool compileFuncDef(F_DEF_ARGS){
     char* name_str = strdup(name_buff);
     programAddNewMem(pos, name_str);
 
-    if(!(expr->right && expr->right->data.type == EXPR_OP && expr->right->data.op == EXPR_O_SEP)){
-        if(var_func){
+    if (!(expr->right && expr->right->data.type == EXPR_OP && expr->right->data.op == EXPR_O_SEP)){
+        if (var_func){
             vfuncTablePut(objs->vfuncs, {{name_str, false}, (expr->left->data.name), (pos->lvl), (pos->flvl)});
             COMPILE_CODE_BLOCK( true, //force-apply RCB
-                if(!compileCode(F_ARGS(expr->right), true))
+                if (!compileCode(F_ARGS(expr->right), true))
                     return false;
             )
 
@@ -399,16 +408,16 @@ static bool compileFuncDef(F_DEF_ARGS){
         }
     }
     else{
-        if(var_func)
+        if (var_func)
             vfuncTablePut(objs->vfuncs, {{name_str, false}, (expr->left->data.name), (pos->lvl), (pos->flvl)});
         else
             funcTablePut(objs->funcs  , {{name_str}       , (expr->left->data.name), (pos->lvl), (pos->flvl)});
 
         // function with its arguments is just compiled into one returnable code block
         COMPILE_CODE_BLOCK( true,
-            if(!compileCode(F_ARGS(expr->right->left), false))
+            if (!compileCode(F_ARGS(expr->right->left), false))
                 return false;
-            if(!compileCode(F_ARGS(expr->right->right), false))
+            if (!compileCode(F_ARGS(expr->right->right), false))
                 return false;
         )
     }

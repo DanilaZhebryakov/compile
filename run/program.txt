@@ -12,31 +12,27 @@ jmp :function_hell_1*skip
 function_hell_1:
 #{
 #begin of rcb 2
+#Load var t1 to reg r2
+#Load var t2 to reg r3
 #src:
 push 666
 #Esrc:
 out
 #src:
-#Load var x to reg r2
+#Load var x to reg r4
 push [99]
 pop rax
 push [rax + 0]
-pop r2
+pop r4
+push r4
+#Esrc:
+out
+#src:
 push r2
 #Esrc:
 out
 #src:
-#Load var t1 to reg r3
-push [rbp + 0]
-pop r3
 push r3
-#Esrc:
-out
-#src:
-#Load var t2 to reg r4
-push [rbp + 1]
-pop r4
-push r4
 #Esrc:
 out
 eocb_2:
@@ -73,8 +69,8 @@ push rbp
 push 1 
 add
 pop rbp
-pop [rbp + 1]
-pop [rbp + 0]
+pop r3
+pop r2
 push [98]
 push rbp
 pop [98]

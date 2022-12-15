@@ -15,15 +15,24 @@ static void unloadVarFromReg(REG_ADD_ARGS RegInfo* regs, int reg_n, bool write);
 static void loadVarToReg(REG_ADD_ARGS RegInfo* regs, int reg_n, VarEntry* var, bool read);
 
 static void printRegInfo(REG_ADD_ARGS RegInfo* regs){
-    for(int i = 0; i < REG_USE_CNT; i++){
-        if(regs[i].var)
+    for (int i = 0; i < REG_USE_CNT; i++){
+        if (regs[i].var)
         fprintf(file, "#reg %d contains var %s (@%d)\n", i + REG_USE_FIRST, regs[i].var->name, regs[i].var->value);
     }
 }
 
 static int getRegWithVar(REG_ADD_ARGS RegInfo* regs, VarEntry* var){
-    for(int i = 0; i < REG_USE_CNT; i++){
-        if(regs[i].var == var){
+    for (int i = 0; i < REG_USE_CNT; i++){
+        if (regs[i].var == var){
+            return i;
+        }
+    }
+    return -1;
+}
+
+static int getFreeReg(REG_ADD_ARGS RegInfo* regs){
+    for (int i = 0; i < REG_USE_CNT; i++){
+        if (regs[i].var == nullptr){
             return i;
         }
     }
@@ -32,15 +41,15 @@ static int getRegWithVar(REG_ADD_ARGS RegInfo* regs, VarEntry* var){
 
 static int findRegForVar(REG_ADD_ARGS RegInfo* regs, VarEntry* var, int lvl, bool read){
     int min_n = 1000000000, max_n = 0, min_reg = 0;
-    for(int i = 0; i < REG_USE_CNT; i++){
-        if(regs[i].load_mem_n > max_n)
+    for (int i = 0; i < REG_USE_CNT; i++){
+        if (regs[i].load_mem_n > max_n)
             max_n = regs[i].load_mem_n;
-        if(regs[i].load_mem_n < min_n){
+        if (regs[i].load_mem_n < min_n){
             min_n = regs[i].load_mem_n;
             min_reg = i;
         }
     }
-    if(regs[min_reg].load_mem_n != 0){
+    if (regs[min_reg].var != nullptr){
         unloadVarFromReg(REG_ADD_ARGS_CALL regs, min_reg, true);
     }
     loadVarToReg(REG_ADD_ARGS_CALL regs, min_reg, var, read);
@@ -52,8 +61,8 @@ static int findRegForVar(REG_ADD_ARGS RegInfo* regs, VarEntry* var, int lvl, boo
 static void regsDescendLvl(REG_ADD_ARGS RegInfo* regs, int lvl, bool save_all){
     fprintf(file, "#save\n");
     printRegInfo(file, pos, regs);
-    for(int i = 0; i < REG_USE_CNT; i++){
-        if(regs[i].load_prog_lvl >= lvl && regs[i].var != nullptr){
+    for (int i = 0; i < REG_USE_CNT; i++){
+        if (regs[i].load_prog_lvl >= lvl && regs[i].var != nullptr){
             unloadVarFromReg(REG_ADD_ARGS_CALL regs, i, regs[i].var->depth < lvl || save_all );
         }
     }
