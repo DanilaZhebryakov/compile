@@ -4,9 +4,16 @@
 
 static char getNextMeaningChar(FILE* file){
     char c = ' ';
+    int comment_st = 0;
     do {
         c = fgetc(file);
-    } while (isspace(c));
+        if(c == '<')
+            comment_st++;
+        if(c == '>')
+            comment_st--;
+        if(c == EOF)
+            return c;
+    } while (isspace(c) || comment_st > 0);
     return c;
 }
 
@@ -72,7 +79,6 @@ static bool scanMathPExpr_(FILE* file, BinTreeNode** tree_place, char* buffer, E
     }
 
     char c = elem_buffer->chr;
-
     if (c == '('){
         refillElemBuffer_(file, buffer, elem_buffer);
         if (!scanMathExpr_(file, tree_place, buffer, elem_buffer, -5))
@@ -93,6 +99,7 @@ static bool scanMathPExpr_(FILE* file, BinTreeNode** tree_place, char* buffer, E
             refillElemBuffer_(file, buffer, elem_buffer);
         return true;
     }
+
     error_log("Unexpected character %c found\n", c);
     return false;
 

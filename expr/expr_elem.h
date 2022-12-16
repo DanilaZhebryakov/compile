@@ -33,11 +33,12 @@ enum exprDataType_t{
     EXPR_FUNC  = 5,
     EXPR_CNTRL = 6,
     EXPR_STAND = 7,
+    EXPR_STLIT = 8,
     EXPR_PAIN  = 0xFF
 };
 
 #define OP_ONLY_CHARS "-+%*/\\^&|%!?~,;"
-#define CNTRL_CHARS "(){}\"'#"
+#define CNTRL_CHARS "(){}#<>"
 #define SPACE_CHARS " \n\t\r"
 
 const double math_eps = 0.0001;

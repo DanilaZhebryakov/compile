@@ -27,6 +27,8 @@ EXPR_OP_DEF(EXPR_MO_TH   ,18 | 0xC0, "tanh", 3, tanh(a)      , "TANH")
 EXPR_OP_DEF(EXPR_MO_SQRT ,19 | 0xC0,  u8"√", 3, sqrt(a)      , "SQRT")
 EXPR_OP_DEF(EXPR_MO_o    ,20 | 0xC0, "o"   , 3, 0            , "!!!!")
 EXPR_OP_DEF(EXPR_MO_d    ,21 | 0xC0, "d"   , 3, 0            , "!!!!")
+EXPR_OP_DEF(EXPR_MO_TANP ,22 | 0xC0, "∟"   , 3, tan(b)*1000  , "TANP")
+
 // -3 can recieve ✘ - blocks
 // -2 can recieve whole lines of code
 // -1 can recieve whole math expresions with =
@@ -44,4 +46,3 @@ EXPR_OP_DEF(EXPR_O_CDEF  ,29  | 0x80, u8"☆"   , -1, NAN    , "CONST" )
 EXPR_OP_DEF(EXPR_O_EQRTL ,32       , u8"←"    , 0 , NAN    , "EQ"    )
 EXPR_OP_DEF(EXPR_O_EQLTR ,33       , u8"→"    , 0 , NAN    , "!!EQ"  )
 EXPR_OP_DEF(EXPR_O_ENDL  ,34       , u8";"    , -4, NAN    , "ST"    )
-

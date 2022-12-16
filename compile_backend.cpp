@@ -14,16 +14,56 @@ static const int RBP_BASE_POS = 99;
 #define REG_ADD_ARGS FILE* file , ProgramPosData* pos,
 #define REG_ADD_ARGS_CALL file, pos,
 #include "program/reg_info.h"
-static void unloadVarFromReg(REG_ADD_ARGS RegInfo* regs, int reg_n, bool write){
-    assert_log(regs[reg_n].var);
-    fprintf(file, "push r%d\n" , reg_n + REG_USE_FIRST);
-    if(regs[reg_n].var->fdepth == pos->flvl){
-        ASM_OUT("pop [rbp + %d]\n", regs[reg_n].var->value);
+
+static void writeToVar(FILE* file, ProgramPosData* pos, int v_flvl, int addr, bool arr = false){
+    if(v_flvl == pos->flvl){
+        if(arr){
+            ASM_OUT("push rbp\n");
+            ASM_OUT("add\n");
+            ASM_OUT("pop rax\n");
+            ASM_OUT("pop [rax + %d]\n", addr);
+        }
+        else{
+            ASM_OUT("pop [rbp + %d]\n", addr);
+        }
     }
     else{
-        ASM_OUT("push [%d]\n", RBP_BASE_POS - regs[reg_n].var->fdepth);
+        ASM_OUT("push [%d]\n", RBP_BASE_POS - v_flvl);
+        if(arr){
+            ASM_OUT("add\n");
+        }
         ASM_OUT("pop rax\n");
-        ASM_OUT("pop [rax + %d]\n", regs[reg_n].var->value);
+        ASM_OUT("pop [rax + %d]\n", addr);
+    }
+}
+static void readFromVar(FILE* file, ProgramPosData* pos, int v_flvl, int addr, bool arr = false){
+    if(v_flvl == pos->flvl){
+        if(arr){
+            ASM_OUT("push rbp\n");
+            ASM_OUT("add\n");
+            ASM_OUT("pop rax\n");
+            ASM_OUT("push [rax + %d]\n", addr);
+        }
+        else{
+            ASM_OUT("push [rbp + %d]\n", addr);
+        }
+    }
+    else{
+        ASM_OUT("push [%d]\n", RBP_BASE_POS - v_flvl);
+        if(arr){
+            ASM_OUT("add\n");
+        }
+        ASM_OUT("pop rax\n");
+        ASM_OUT("push [rax + %d]\n", addr);
+    }
+}
+
+
+static void unloadVarFromReg(REG_ADD_ARGS RegInfo* regs, int reg_n, bool write){
+    assert_log(regs[reg_n].var);
+    if(write){
+        fprintf(file, "push r%d\n" , reg_n + REG_USE_FIRST);
+        writeToVar(file, pos, regs[reg_n].var->fdepth, regs[reg_n].var->value);
     }
     regs[reg_n].var = nullptr;
     regs[reg_n].load_prog_lvl = -1;
@@ -32,17 +72,8 @@ static void unloadVarFromReg(REG_ADD_ARGS RegInfo* regs, int reg_n, bool write){
 static void loadVarToReg(REG_ADD_ARGS RegInfo* regs, int reg_n, VarEntry* var, bool read){
     ASM_OUT("#Load var %s to reg r%d\n", var->name, reg_n + REG_USE_FIRST);
     if(read){
-
-        if(var->fdepth == pos->flvl){
-            ASM_OUT("push [rbp + %d]\n", var->value);
-        }
-        else{
-            ASM_OUT("push [%d]\n", RBP_BASE_POS - var->fdepth);
-            ASM_OUT("pop rax\n");
-            ASM_OUT("push [rax + %d]\n", var->value);
-        }
-
-        ASM_OUT("pop r%d\n" , reg_n + REG_USE_FIRST);
+        readFromVar(file, pos, var->fdepth, var->value);
+        fprintf(file, "pop r%d\n" , reg_n + REG_USE_FIRST);
     }
     regs[reg_n].var = var;
 }
@@ -54,6 +85,7 @@ static void compileVarRead(FILE* file, ProgramPosData* pos, RegInfo* regs, VarEn
     }
     ASM_OUT("push r%d\n", reg_n + REG_USE_FIRST);
 }
+
 
 static void compileFuncCall(FILE* file, ProgramPosData* pos, RegInfo* regs, int nargs, bool ret_val, int func_flvl){
     regsDescendLvl(file, pos, regs, 0, true);
@@ -150,16 +182,15 @@ static bool compileMathOp(F_DEF_ARGS){
     if (!req_val)
         return true;
 
-    if (!compileCodeBlock(F_ARGS(expr->left), true))
+    if (!compileCodeBlock(F_ARGS(expr->right), true))
         return false;
 
     if (!isExprOpUnary(expr->data.op)){
         pos->stack_size++;
-        if (!compileCodeBlock(F_ARGS(expr->right), true))
+        if (!compileCodeBlock(F_ARGS(expr->left), true))
             return false;
         pos->stack_size--;
     }
-
 
     switch(expr->data.op){
         case EXPR_MO_ADD:
@@ -180,23 +211,38 @@ static bool compileMathOp(F_DEF_ARGS){
         case EXPR_MO_SQRT:
             ASM_OUT("sqrt\n");
             break;
+        case EXPR_MO_TANP:
+            ASM_OUT("tan\n");
+            break;
         default:
-            printf("Bad math op: ");
+            error_log("Bad math op: ");
             printExprElem(stdout, expr->data);
             return false;
     }
     return true;
 }
 
-static bool compileSetDst(F_DEF_ARGS, bool create_vars = false){
+static bool compileSetDst(F_DEF_ARGS, bool create_vars = false, bool arr = false){
 
     if (expr->data.type == EXPR_OP){
         if (expr->data.op == EXPR_O_COMMA){
+            if(arr){
+                ASM_OUT("pop rax\n");
+            }
             ASM_OUT("dup\n");
+            if(arr){
+                ASM_OUT("push rax\n");
+                ASM_OUT("swap\n");
+                ASM_OUT("push rax\n");
+                pos->stack_size++;
+            }
             pos->stack_size++;
-            CHECK( compileSetDst(F_ARGS(expr->left), false  , create_vars) )
+            CHECK( compileSetDst(F_ARGS(expr->left), false  , create_vars, arr) )
             pos->stack_size--;
-            CHECK( compileSetDst(F_ARGS(expr->right), req_val, create_vars) )
+            if(arr){
+                pos->stack_size--;
+            }
+            CHECK( compileSetDst(F_ARGS(expr->right), req_val, create_vars, arr) )
             return true;
         }
         if (expr->data.op == EXPR_O_IF){
@@ -208,21 +254,24 @@ static bool compileSetDst(F_DEF_ARGS, bool create_vars = false){
             if (expr->right->data.type == EXPR_OP && expr->right->data.op == EXPR_O_SEP){
 
                 ASM_OUT("jne :a_if_else_%d\n", if_lbl_id);
-                CHECK( compileSetDst(F_ARGS(expr->right->left ), req_val, create_vars) )
+                CHECK( compileSetDst(F_ARGS(expr->right->left ), req_val, create_vars, arr) )
                 ASM_OUT("jmp :a_if_end_%d\n" , if_lbl_id);
                 regsDescendLvl(file, pos, regs, 0, true);
                 ASM_OUT("a_if_else_%d:\n", if_lbl_id);
-                CHECK( compileSetDst(F_ARGS(expr->right->right), req_val, create_vars) )
+                CHECK( compileSetDst(F_ARGS(expr->right->right), req_val, create_vars, arr) )
                 ASM_OUT("a_if_end_%d:\n" , if_lbl_id);
             }
             else {
                 ASM_OUT("jne :a_if_else_%d\n", if_lbl_id);
-                CHECK( compileSetDst(F_ARGS(expr->right), req_val, create_vars) )
+                CHECK( compileSetDst(F_ARGS(expr->right), req_val, create_vars, arr) )
                 ASM_OUT("jmp :a_if_end_%d\n", if_lbl_id);
 
                 ASM_OUT("a_if_else_%d:\n", if_lbl_id);
-                if(!req_val)
+                if(!req_val){
                     ASM_OUT("pop rnn\n");
+                    if(arr)
+                        ASM_OUT("pop rnn\n");
+                }
                 ASM_OUT("a_if_end_%d:\n", if_lbl_id);
             }
             regsDescendLvl(file, pos, regs, 0, true);
@@ -232,6 +281,9 @@ static bool compileSetDst(F_DEF_ARGS, bool create_vars = false){
     }
 
     if(expr->data.type == EXPR_KVAR){
+        if(arr){ // kvars as well as vfuncs ignore array indexes
+          ASM_OUT("pop rnn\n");
+        }
         switch(expr->data.kword){
         case EXPR_KW_RET:
             ASM_OUT("pop rax\n");
@@ -271,6 +323,9 @@ static bool compileSetDst(F_DEF_ARGS, bool create_vars = false){
     if(expr->data.type == EXPR_VAR){
         VFuncEntry* vfunc = vfuncTableGetRW(objs->vfuncs, expr->data.name, true);
         if (vfunc){
+            if(arr){ // kvars as well as vfuncs ignore array indexes
+                ASM_OUT("pop rnn\n");
+            }
             ASM_OUT("push :%s\n", vfunc->value.lbl);
             ASM_OUT("pop rax\n");
             compileFuncCall(file, pos, regs, 1, false, vfunc->fdepth);
@@ -290,8 +345,13 @@ static bool compileSetDst(F_DEF_ARGS, bool create_vars = false){
                 error_log("Assignment var %s not found\n", expr->data.name);
                 return false;
             }
-            int reg_n = findRegForVar(file, pos, regs, var, pos->lvl, false);
-            ASM_OUT("pop r%d\n", reg_n + REG_USE_FIRST);
+            if (arr){
+                writeToVar(file, pos, var->fdepth, var->value, true);
+            }
+            else{
+                int reg_n = findRegForVar(file, pos, regs, var, pos->lvl, false);
+                ASM_OUT("pop r%d\n", reg_n + REG_USE_FIRST);
+            }
         }
         return true;
     }
@@ -300,6 +360,40 @@ static bool compileSetDst(F_DEF_ARGS, bool create_vars = false){
     printExprElem(stderr  , expr->data);
     printf_log("\n");
     return false;
+}
+
+static int compileSetArray(F_DEF_ARGS, BinTreeNode* dst, int ind){
+    if (!expr)
+        return 0;
+    if (expr->data.type == EXPR_STLIT){
+        int i = 0;
+        while(expr->data.name[i] != '\0'){
+            ASM_OUT("push '%c'\n", expr->data.name[i]);
+            ASM_OUT("push %d\n"  , ind);
+            compileSetDst(F_ARGS(dst), false, false, true);
+            i++;
+        }
+        return i;
+    }
+    if  (expr->data.type == EXPR_OP || expr->data.op == EXPR_O_COMMA){
+        int t = compileSetArray(F_ARGS(expr->left), true, dst, ind);
+        if(t == -1){
+            return -1;
+        }
+        ind += t;
+        t = compileSetArray(F_ARGS(expr->right), true, dst, ind);
+        if(t == -1){
+            return -1;
+        }
+        ind += t;
+        return ind;
+    }
+
+    if (!compileCodeBlock(F_ARGS(expr), true))
+        return -1;
+    ASM_OUT("push %d\n", ind);
+    compileSetDst(F_ARGS(dst), false, false, true);
+    return 1;
 }
 
 static bool compileSetVar(F_DEF_ARGS, bool create_vars = false){
@@ -333,12 +427,29 @@ static bool compileSetVar(F_DEF_ARGS, bool create_vars = false){
         src = expr->left;
         dst = expr->right;
     }
-    ASM_OUT("#src:\n");
-    if(!compileCodeBlock(F_ARGS(src), true)){
-        return false;
+
+    if (src->data.type == EXPR_OP && src->data.op == EXPR_O_COMMA){
+        if(req_val){
+            error_log("assignment returning value not supported for arrays\n");
+            return false;
+        }
+        ASM_OUT("#aset:\n");
+        if(compileSetArray(F_ARGS(src), false, dst, 0) == -1){
+            error_log("array error\n");
+            return false;
+        }
+        ASM_OUT("#Easet:\n");
+        return true;
     }
-    ASM_OUT("#Esrc:\n");
-    return compileSetDst(F_ARGS(dst), req_val, create_vars);
+    else{
+        ASM_OUT("#src:\n");
+        if(!compileCodeBlock(F_ARGS(src), true)){
+            return false;
+        }
+        ASM_OUT("#Esrc:\n");
+        return compileSetDst(F_ARGS(dst), req_val, create_vars);
+    }
+
 }
 
 static bool compileVarDef(F_DEF_ARGS){
@@ -365,6 +476,7 @@ static bool compileVarDef(F_DEF_ARGS){
             return true;
         }
     }
+
     error_log("Invalid elem for var def:");
     printExprElem(_logfile, expr->data);
     printExprElem(stderr  , expr->data);
@@ -513,7 +625,7 @@ static bool compileCode(F_DEF_ARGS){
         return true;
     }
     if(expr->data.type == EXPR_OP){
-        //printf_log("%s " , mathOpName(expr->data.op));
+        //printf_log("%s " , exprOpName(expr->data.op));
         if(isMathOp(expr->data.op))
             return compileMathOp(F_ARGS(expr), true);
         int instr_lbl_n = pos->lbl_id;
@@ -597,6 +709,10 @@ static bool compileCode(F_DEF_ARGS){
         }
 
     }
+    error_log("Unknown elem for code:");
+    printExprElem(stderr, expr->data);
+    printExprElem(_logfile, expr->data);
+    printf_log("\n");
     return false;
 }
 
@@ -612,7 +728,13 @@ bool compileProgram(FILE* file, BinTreeNode* code){
     ASM_OUT("pop [%d]\n", RBP_BASE_POS);
     RegInfo regs[14] = {};
 
-    return compileCodeBlock(file, code, &objs, &pos, regs, false);
+    bool ret = compileCodeBlock(file, code, &objs, &pos, regs, false);
+    if (!ret){
+        error_log("Compiltion failed");
+    }
 
+
+    programPosDataDtor(&pos);
     programNameTableDtor(&objs);
+    return ret;
 }

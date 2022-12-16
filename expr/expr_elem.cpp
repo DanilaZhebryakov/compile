@@ -28,9 +28,15 @@ ExprElem scanExprElem (FILE* file, char c, char* buffer){
     ExprElem ret = {};
     if (isdigit(c)){
         ret.type = EXPR_CONST;
-        char c1 = fgetc(file);
-        ungetc(c1, file);
         fscanf(file, "%lg", &(ret.val));
+        return ret;
+    }
+    if (c == '"'){
+
+        fscanf(file, "\"%[^\"]\"", buffer);
+        printf("stlit |%s|\n", buffer);
+        ret.type = EXPR_STLIT;
+        ret.name = strdup(buffer);
         return ret;
     }
 
@@ -99,6 +105,9 @@ void printExprElem(FILE* file, ExprElem elem){
         break;
     case EXPR_STAND:
         fprintf(file, "ST%d", elem.stand);
+        break;
+    case EXPR_STLIT:
+        fprintf(file, "\"%d\"", elem.name);
         break;
     default:
         fprintf(file, "TRASH");

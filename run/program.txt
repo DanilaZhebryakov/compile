@@ -83,4 +83,54 @@ sub
 pop rbp
 #end of func call
 pop rnn
+#aset:
+push 'H'
+push 0
+pop rnn
+outch
+push 'e'
+push 0
+pop rnn
+outch
+push 'l'
+push 0
+pop rnn
+outch
+push 'l'
+push 0
+pop rnn
+outch
+push 'o'
+push 0
+pop rnn
+outch
+push ' '
+push 0
+pop rnn
+outch
+push 'w'
+push 0
+pop rnn
+outch
+push 'o'
+push 0
+pop rnn
+outch
+push 'r'
+push 0
+pop rnn
+outch
+push 'l'
+push 0
+pop rnn
+outch
+push 'd'
+push 0
+pop rnn
+outch
+push 10
+push 11
+pop rnn
+outch
+#Easet:
 #}
