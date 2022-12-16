@@ -40,51 +40,62 @@
         {
           ST
           {
-            VAR
+            FUNC
             {
-              "y"
-              {NIL}
-              {NIL}
-            }
-            {NIL}
-          }
-          {
-            ST
-            {
-              EQ
+              "hell"
               {
-                "y"
-                {NIL}
+                PARAM
+                {
+                  ST
+                  {
+                    VAR
+                    {
+                      "t2"
+                      {NIL}
+                      {NIL}
+                    }
+                    {NIL}
+                  }
+                  {
+                    VAR
+                    {
+                      "t1"
+                      {NIL}
+                      {NIL}
+                    }
+                    {NIL}
+                  }
+                }
                 {NIL}
               }
-              {
-                630
-                {NIL}
-                {NIL}
-              }
+              {NIL}
             }
             {
               ST
               {
-                VAR
+                EQ
                 {
-                  "z"
+                  SCREEN_N
                   {NIL}
                   {NIL}
                 }
-                {NIL}
+                {
+                  666
+                  {NIL}
+                  {NIL}
+                }
               }
               {
                 ST
                 {
                   EQ
                   {
-                    "z"
+                    SCREEN_N
                     {NIL}
                     {NIL}
                   }
                   {
-                    65280
+                    "x"
                     {NIL}
                     {NIL}
                   }
@@ -99,37 +110,110 @@
                       {NIL}
                     }
                     {
-                      ADD
-                      {
-                        "x"
-                        {NIL}
-                        {NIL}
-                      }
-                      {
-                        DIV
-                        {
-                          "z"
-                          {NIL}
-                          {NIL}
-                        }
-                        {
-                          "y"
-                          {NIL}
-                          {NIL}
-                        }
-                      }
+                      "t1"
+                      {NIL}
+                      {NIL}
                     }
                   }
                   {
                     ST
                     {
-                      REVOLVER
-                      {NIL}
-                      {NIL}
+                      EQ
+                      {
+                        SCREEN_N
+                        {NIL}
+                        {NIL}
+                      }
+                      {
+                        "t2"
+                        {NIL}
+                        {NIL}
+                      }
                     }
                     {NIL}
                   }
                 }
+              }
+            }
+          }
+          {
+            ST
+            {
+              VFUNC
+              {
+                "ans"
+                {NIL}
+                {NIL}
+              }
+              {
+                EQ
+                {
+                  RET
+                  {NIL}
+                  {NIL}
+                }
+                {
+                  42
+                  {NIL}
+                  {NIL}
+                }
+              }
+            }
+            {
+              ST
+              {
+                CALL
+                {
+                  "hell"
+                  {
+                    ST
+                    {
+                      13
+                      {NIL}
+                      {NIL}
+                    }
+                    {
+                      ST
+                      {
+                        11
+                        {NIL}
+                        {NIL}
+                      }
+                      {NIL}
+                    }
+                  }
+                  {NIL}
+                }
+                {NIL}
+              }
+              {
+                ST
+                {
+                  EQ
+                  {
+                    SCREEN_C
+                    {NIL}
+                    {NIL}
+                  }
+                  {
+                    ST
+                    {
+                      "*/?^%!&$"
+                      {NIL}
+                      {NIL}
+                    }
+                    {
+                      PARAM
+                      {
+                        10
+                        {NIL}
+                        {NIL}
+                      }
+                      {NIL}
+                    }
+                  }
+                }
+                {NIL}
               }
             }
           }

@@ -2,11 +2,22 @@
 #include "expr/formule_utils.h"
 #include <ctype.h>
 
-static char getNextMeaningChar(FILE* file){
+struct FilePosInfo{
+    const char* file_name;
+    size_t file_line;
+    size_t line_pos;
+};
+
+static char getNextMeaningChar(FILE* file, FilePosInfo* pos){
     char c = ' ';
     int comment_st = 0;
     do {
         c = fgetc(file);
+        pos->line_pos++;
+        if(c == '\n'){
+            pos->file_line++;
+            pos->line_pos = 0;
+        }
         if(c == '<')
             comment_st++;
         if(c == '>')
@@ -17,8 +28,8 @@ static char getNextMeaningChar(FILE* file){
     return c;
 }
 
-static void refillElemBuffer_(FILE* file, char* buffer, ExprElem* elem_buffer){
-    char c = getNextMeaningChar(file);
+static void refillElemBuffer_(FILE* file, FilePosInfo* pos, char* buffer, ExprElem* elem_buffer){
+    char c = getNextMeaningChar(file, pos);
 
     if (c == EOF || (strchr(CNTRL_CHARS, c))){
         elem_buffer->type = EXPR_CNTRL;
@@ -28,13 +39,16 @@ static void refillElemBuffer_(FILE* file, char* buffer, ExprElem* elem_buffer){
     ungetc(c, file);
 
     *elem_buffer = scanExprElem(file, c, buffer);
+    elem_buffer->file_name = pos->file_name;
+    elem_buffer->file_line = pos->file_line;
+    elem_buffer->line_pos  = pos->line_pos ;
 }
 
-static bool scanMathExpr_(FILE* file, BinTreeNode** tree_place, char* buffer, ExprElem* elem_buffer, int priority);
+static bool scanMathExpr_(FILE* file, FilePosInfo* pos, BinTreeNode** tree_place, char* buffer, ExprElem* elem_buffer, int priority);
 
-static bool scanMathPExpr_(FILE* file, BinTreeNode** tree_place, char* buffer, ExprElem* elem_buffer, bool short_scan = false);
+static bool scanMathPExpr_(FILE* file, FilePosInfo* pos, BinTreeNode** tree_place, char* buffer, ExprElem* elem_buffer, bool short_scan = false);
 
-static bool scanMathBExpr_(FILE* file, BinTreeNode** tree_place, char* buffer, ExprElem* elem_buffer, bool short_scan){
+static bool scanMathBExpr_(FILE* file, FilePosInfo* pos, BinTreeNode** tree_place, char* buffer, ExprElem* elem_buffer, bool short_scan){
     if (elem_buffer->type == EXPR_OP){
             if (!canExprOpBeUnary(elem_buffer->op)){
                 error_log("Binary operator %s used as unary\n", exprOpName(elem_buffer->op));
@@ -45,14 +59,14 @@ static bool scanMathBExpr_(FILE* file, BinTreeNode** tree_place, char* buffer, E
             BinTreeNode** tree_place_cur = &(*tree_place)->right;
 
             int op_priority = getExprOpPriority(elem_buffer->op);
-            refillElemBuffer_(file, buffer, elem_buffer);
+            refillElemBuffer_(file, pos, buffer, elem_buffer);
 
             if (short_scan){
-                if (!scanMathPExpr_(file, tree_place_cur, buffer, elem_buffer, true))
+                if (!scanMathPExpr_(file, pos, tree_place_cur, buffer, elem_buffer, true))
                     return false;
             }
             else{
-                if (!scanMathExpr_(file, tree_place_cur, buffer, elem_buffer, op_priority))
+                if (!scanMathExpr_(file, pos, tree_place_cur, buffer, elem_buffer, op_priority))
                    return false;
             }
             binTreeUpdSize(*tree_place);
@@ -61,11 +75,11 @@ static bool scanMathBExpr_(FILE* file, BinTreeNode** tree_place, char* buffer, E
     }
     *tree_place = binTreeNewNode(*elem_buffer);
     if (!short_scan)
-        refillElemBuffer_(file, buffer, elem_buffer);
+        refillElemBuffer_(file, pos, buffer, elem_buffer);
 
     if ((*tree_place)->data.type == EXPR_VAR && (elem_buffer->type == EXPR_CNTRL && elem_buffer->chr == '(') && !short_scan){
         (*tree_place)->data.type = EXPR_FUNC;
-        if (!scanMathPExpr_(file, &((*tree_place)->right), buffer, elem_buffer))
+        if (!scanMathPExpr_(file, pos, &((*tree_place)->right), buffer, elem_buffer))
             return false;
         binTreeUpdSize(*tree_place);
     }
@@ -73,15 +87,15 @@ static bool scanMathBExpr_(FILE* file, BinTreeNode** tree_place, char* buffer, E
     return true;
 }
 
-static bool scanMathPExpr_(FILE* file, BinTreeNode** tree_place, char* buffer, ExprElem* elem_buffer, bool short_scan){
+static bool scanMathPExpr_(FILE* file, FilePosInfo* pos, BinTreeNode** tree_place, char* buffer, ExprElem* elem_buffer, bool short_scan){
     if (elem_buffer->type != EXPR_CNTRL){
-        return scanMathBExpr_(file, tree_place, buffer, elem_buffer, short_scan);
+        return scanMathBExpr_(file, pos, tree_place, buffer, elem_buffer, short_scan);
     }
 
     char c = elem_buffer->chr;
     if (c == '('){
-        refillElemBuffer_(file, buffer, elem_buffer);
-        if (!scanMathExpr_(file, tree_place, buffer, elem_buffer, -5))
+        refillElemBuffer_(file, pos, buffer, elem_buffer);
+        if (!scanMathExpr_(file, pos, tree_place, buffer, elem_buffer, -5))
             return false;
         if(elem_buffer->type != EXPR_CNTRL){
             printf("No closing ')' Got \"");
@@ -96,7 +110,7 @@ static bool scanMathPExpr_(FILE* file, BinTreeNode** tree_place, char* buffer, E
         }
 
         if (!short_scan)
-            refillElemBuffer_(file, buffer, elem_buffer);
+            refillElemBuffer_(file, pos, buffer, elem_buffer);
         return true;
     }
 
@@ -109,7 +123,7 @@ static bool isEndOfExpr(ExprElem* elem_buffer){
     return (elem_buffer->type == EXPR_CNTRL && !strchr("({", elem_buffer->chr));
 }
 
-static bool scanMathExpr_(FILE* file, BinTreeNode** tree_place, char* buffer, ExprElem* elem_buffer, int priority){
+static bool scanMathExpr_(FILE* file, FilePosInfo* pos, BinTreeNode** tree_place, char* buffer, ExprElem* elem_buffer, int priority){
     assert_log(tree_place != nullptr);
     if (isEndOfExpr(elem_buffer)){
         *tree_place = nullptr;
@@ -117,11 +131,11 @@ static bool scanMathExpr_(FILE* file, BinTreeNode** tree_place, char* buffer, Ex
     }
 
     if (priority > MAX_EXPR_OP_PRIORITY){
-        return scanMathPExpr_(file, tree_place, buffer, elem_buffer);
+        return scanMathPExpr_(file, pos, tree_place, buffer, elem_buffer);
     }
     BinTreeNode** tree_place_cur = tree_place;
     while (1){
-        if (!scanMathExpr_(file, tree_place_cur, buffer, elem_buffer, priority+1))
+        if (!scanMathExpr_(file, pos,  tree_place_cur, buffer, elem_buffer, priority+1))
             return false;
         if (elem_buffer->type == EXPR_OP && isExprOpUnary(elem_buffer->op)){
             error_log("Unary operator %s used as binary\n", exprOpName(elem_buffer->op));
@@ -147,7 +161,7 @@ static bool scanMathExpr_(FILE* file, BinTreeNode** tree_place, char* buffer, Ex
         *tree_place = new_node;
         new_node->left = old_node;
         tree_place_cur = &(new_node->right);
-        refillElemBuffer_(file, buffer, elem_buffer);
+        refillElemBuffer_(file, pos,  buffer, elem_buffer);
         if (isEndOfExpr(elem_buffer)){
             binTreeUpdSize(*tree_place);
             return canExprOpBeUnaryL(new_node->data.op);
@@ -158,12 +172,16 @@ static bool scanMathExpr_(FILE* file, BinTreeNode** tree_place, char* buffer, Ex
 
 BinTreeNode* scanProgram(FILE* file){
     char* buffer = (char*)calloc(MAX_FORM_WORD_LEN, sizeof(char));
+    FilePosInfo pos;
+    pos.file_name = "_";
+    pos.file_line = 0;
+    pos.line_pos = 0;
     BinTreeNode* tree =  nullptr;
     ExprElem elem_buffer = {};
     elem_buffer.type = EXPR_PAIN;
 
-    refillElemBuffer_(file, buffer, &elem_buffer);
-    bool res = scanMathPExpr_(file, &tree, buffer, &elem_buffer, true);
+    refillElemBuffer_(file, &pos, buffer, &elem_buffer);
+    bool res = scanMathPExpr_(file, &pos, &tree, buffer, &elem_buffer, true);
     free(buffer);
 
     if (!res){

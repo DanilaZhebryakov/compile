@@ -38,13 +38,15 @@ enum exprDataType_t{
 };
 
 #define OP_ONLY_CHARS "-+%*/\\^&|%!?~,;"
-#define CNTRL_CHARS "(){}#<>"
+#define CNTRL_CHARS "(){}#<>["
 #define SPACE_CHARS " \n\t\r"
 
 const double math_eps = 0.0001;
 
 struct ExprElem{
     exprDataType_t type;
+    const char* file_name;
+    size_t file_line, line_pos;
     union {double val; char* name; exprOpType_t op; exprKWType_t kword; exprStandartThing_t stand; char chr;};
 };
 

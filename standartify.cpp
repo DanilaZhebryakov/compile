@@ -184,6 +184,16 @@ static BinTreeNode* standartifySetDst_(BinTreeNode* expr, BinTreeNode** pre, boo
 static BinTreeNode** standartifySetVar_(BinTreeNode* expr, BinTreeNode** tgt, BinTreeNode** pre, bool create_vars, int level, BinTreeNode** ret_val_node){
     assert_log(tgt);
     assert_log(expr);
+    if(expr->data.type == EXPR_VAR){
+        if(create_vars){
+            BinTreeNode* var_cr_node = binTreeNewNode({EXPR_OP});
+            var_cr_node->data.op = EXPR_O_VDEF;
+            var_cr_node->left = expr;
+            expr->usedc++;
+            insertStNode(var_cr_node, pre);
+        }
+        return tgt;
+    }
     if(expr->data.type != EXPR_OP){
         error_log("Bad elem ");
         printExprElem(stdout  , expr->data);
@@ -303,7 +313,8 @@ static BinTreeNode** standartifyProgram_(BinTreeNode* expr, BinTreeNode** tgt,  
         BinTreeNode* new_node  = binTreeNewNode({EXPR_STAND});
         BinTreeNode* name_node = binTreeNewNode({EXPR_VAR});
         new_node->data.stand = EXPR_ST_FUNC;
-        name_node->data.name = strdup(expr->data.name);
+        printf_log("%p", expr->left->data.name);
+        name_node->data.name = strdup(expr->left->data.name);
 
         new_node ->left  = name_node;
         name_node->left  = standartifyCodeBlock_(expr->right->left, level, ret_val_node, EXPR_O_COMMA);

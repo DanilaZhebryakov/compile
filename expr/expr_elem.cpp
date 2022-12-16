@@ -34,7 +34,6 @@ ExprElem scanExprElem (FILE* file, char c, char* buffer){
     if (c == '"'){
 
         fscanf(file, "\"%[^\"]\"", buffer);
-        printf("stlit |%s|\n", buffer);
         ret.type = EXPR_STLIT;
         ret.name = strdup(buffer);
         return ret;
@@ -107,7 +106,7 @@ void printExprElem(FILE* file, ExprElem elem){
         fprintf(file, "ST%d", elem.stand);
         break;
     case EXPR_STLIT:
-        fprintf(file, "\"%d\"", elem.name);
+        fprintf(file, "\"%s\"", elem.name);
         break;
     default:
         fprintf(file, "TRASH");

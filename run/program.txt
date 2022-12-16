@@ -56,81 +56,12 @@ push rax
 swap
 ret
 v-function_ans_3*skip:
-push 13
-push 11
-push :function_hell_1
-pop rax
-#save
-#reg 2 contains var x (@0)
-push r2
-pop [rbp + 0]
-#call of func
-push rbp
-push 1 
-add
-pop rbp
-pop r3
-pop r2
-push [98]
-push rbp
-pop [98]
-call rax
-swap
-pop [98]
-push rbp
-push 1 
-sub
-pop rbp
-#end of func call
-pop rnn
-#aset:
-push 'H'
-push 0
-pop rnn
-outch
-push 'e'
-push 0
-pop rnn
-outch
-push 'l'
-push 0
-pop rnn
-outch
-push 'l'
-push 0
-pop rnn
-outch
-push 'o'
-push 0
-pop rnn
-outch
-push ' '
-push 0
-pop rnn
-outch
-push 'w'
-push 0
-pop rnn
-outch
-push 'o'
-push 0
-pop rnn
-outch
-push 'r'
-push 0
-pop rnn
-outch
-push 'l'
-push 0
-pop rnn
-outch
-push 'd'
-push 0
-pop rnn
-outch
+#src:
+push 4
+#Esrc:
+#src:
 push 10
-push 11
-pop rnn
+add
+#Esrc:
 outch
-#Easet:
 #}

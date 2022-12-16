@@ -15,6 +15,14 @@ static const int RBP_BASE_POS = 99;
 #define REG_ADD_ARGS_CALL file, pos,
 #include "program/reg_info.h"
 
+#define compilationError(...) \
+{error_log(__VA_ARGS__);        \
+printf_log("at:'");           \
+printExprElem(stderr  , expr->data);\
+printExprElem(_logfile, expr->data);\
+printf_log("' (%s:%d:%d)\n", expr->data.file_name, expr->data.file_line, expr->data.line_pos);\
+}
+
 static void writeToVar(FILE* file, ProgramPosData* pos, int v_flvl, int addr, bool arr = false){
     if(v_flvl == pos->flvl){
         if(arr){
@@ -148,21 +156,25 @@ static void compileFuncCall(FILE* file, ProgramPosData* pos, RegInfo* regs, int 
 
 #define CHECK(...)      \
     if(!(__VA_ARGS__))  \
-        return false;
+        cmp_ok = false;
 
 static bool compileCode(F_DEF_ARGS);
 
 static bool compileCodeBlock(F_DEF_ARGS){
-    if (!expr)
+    bool cmp_ok = true;
+    if (!expr){
+        if(req_val){
+            compilationError("Empty expression can not return value");
+        }
         return !req_val;
+    }
     if (expr->data.type != EXPR_OP || expr->data.op != EXPR_O_ENDL){
         return compileCode(F_ARGS(expr), req_val);
     }
     COMPILE_CODE_BLOCK(req_val,
-            if(!compileCode(F_ARGS(expr), false))
-                return false;
+            CHECK(compileCode(F_ARGS(expr), false))
     )
-    return true;
+    return cmp_ok;
 }
 
 static int compileArgList(F_DEF_ARGS){
@@ -179,16 +191,15 @@ static int compileArgList(F_DEF_ARGS){
 }
 
 static bool compileMathOp(F_DEF_ARGS){
+    bool cmp_ok = true;
     if (!req_val)
-        return true;
+        return cmp_ok;
 
-    if (!compileCodeBlock(F_ARGS(expr->right), true))
-        return false;
+    CHECK(compileCodeBlock(F_ARGS(expr->right), true))
 
     if (!isExprOpUnary(expr->data.op)){
         pos->stack_size++;
-        if (!compileCodeBlock(F_ARGS(expr->left), true))
-            return false;
+        CHECK(compileCodeBlock(F_ARGS(expr->left), true))
         pos->stack_size--;
     }
 
@@ -215,15 +226,14 @@ static bool compileMathOp(F_DEF_ARGS){
             ASM_OUT("tan\n");
             break;
         default:
-            error_log("Bad math op: ");
-            printExprElem(stdout, expr->data);
+            compilationError("Bad math op");
             return false;
     }
-    return true;
+    return cmp_ok;
 }
 
 static bool compileSetDst(F_DEF_ARGS, bool create_vars = false, bool arr = false){
-
+    bool cmp_ok = true;
     if (expr->data.type == EXPR_OP){
         if (expr->data.op == EXPR_O_COMMA){
             if(arr){
@@ -243,7 +253,7 @@ static bool compileSetDst(F_DEF_ARGS, bool create_vars = false, bool arr = false
                 pos->stack_size--;
             }
             CHECK( compileSetDst(F_ARGS(expr->right), req_val, create_vars, arr) )
-            return true;
+            return cmp_ok;
         }
         if (expr->data.op == EXPR_O_IF){
             CHECK( compileCodeBlock(F_ARGS(expr->left), true) )
@@ -275,9 +285,8 @@ static bool compileSetDst(F_DEF_ARGS, bool create_vars = false, bool arr = false
                 ASM_OUT("a_if_end_%d:\n", if_lbl_id);
             }
             regsDescendLvl(file, pos, regs, 0, true);
-            return true;
+            return cmp_ok;
         }
-        //return false;
     }
 
     if(expr->data.type == EXPR_KVAR){
@@ -304,20 +313,20 @@ static bool compileSetDst(F_DEF_ARGS, bool create_vars = false, bool arr = false
             break;
         case EXPR_KW_BAD:
             ASM_OUT("bad\n");
-            return true;
+            return cmp_ok;
         case EXPR_KW_HALT:
             ASM_OUT("halt\n");
-            return true;
+            return cmp_ok;
         case EXPR_KW_NULL:
             ASM_OUT("pop rnn\n");
             if (req_val)
                 ASM_OUT("push 0\n");
-            return true;
+            return cmp_ok;
         default:
-            error_log("Unknown kvar for write: %s\n", getExprKWName(expr->data.kword));
+            compilationError("Unknown kvar for write: %s\n", getExprKWName(expr->data.kword));
             return false;
         }
-        return true;
+        return cmp_ok;
     }
 
     if(expr->data.type == EXPR_VAR){
@@ -342,7 +351,7 @@ static bool compileSetDst(F_DEF_ARGS, bool create_vars = false, bool arr = false
             }
             VarEntry* var = varTableGet(objs->vars, expr->data.name);
             if (!var){
-                error_log("Assignment var %s not found\n", expr->data.name);
+                compilationError("Assignment var %s not found\n", expr->data.name);
                 return false;
             }
             if (arr){
@@ -353,16 +362,14 @@ static bool compileSetDst(F_DEF_ARGS, bool create_vars = false, bool arr = false
                 ASM_OUT("pop r%d\n", reg_n + REG_USE_FIRST);
             }
         }
-        return true;
+        return cmp_ok;
     }
-    error_log("Invalid elem for write:");
-    printExprElem(_logfile, expr->data);
-    printExprElem(stderr  , expr->data);
-    printf_log("\n");
+    compilationError("Invalid elem for write");
     return false;
 }
 
 static int compileSetArray(F_DEF_ARGS, BinTreeNode* dst, int ind){
+    bool cmp_ok = true;
     if (!expr)
         return 0;
     if (expr->data.type == EXPR_STLIT){
@@ -375,7 +382,7 @@ static int compileSetArray(F_DEF_ARGS, BinTreeNode* dst, int ind){
         }
         return i;
     }
-    if  (expr->data.type == EXPR_OP || expr->data.op == EXPR_O_COMMA){
+    if  (expr->data.type == EXPR_OP && expr->data.op == EXPR_O_COMMA){
         int t = compileSetArray(F_ARGS(expr->left), true, dst, ind);
         if(t == -1){
             return -1;
@@ -397,27 +404,23 @@ static int compileSetArray(F_DEF_ARGS, BinTreeNode* dst, int ind){
 }
 
 static bool compileSetVar(F_DEF_ARGS, bool create_vars = false){
+    bool cmp_ok = true;
     if (!expr){
-        error_log("Empty var definition not allowed\n");
+        compilationError("Empty var definition not allowed");
         return false;
     }
     if (expr->data.type != EXPR_OP){
-        error_log("Bad elem ");
-        printExprElem(stdout  , expr->data);
-        printExprElem(_logfile, expr->data);
-        printf_log("in var assignment\n");
+        compilationError("Bad elem in var assignment");
         return false;
     }
     if (expr->data.op == EXPR_O_COMMA){
-        if (!compileSetVar(F_ARGS(expr->left), false  , create_vars))
-            return false;
-        if (!compileSetVar(F_ARGS(expr->left), req_val, create_vars))
-            return false;
-        return true;
+        CHECK(compileSetVar(F_ARGS(expr->left), false  , create_vars))
+        CHECK(compileSetVar(F_ARGS(expr->left), req_val, create_vars))
+        return cmp_ok;
     }
 
     if (!(expr->left && expr->right)){
-        error_log("Assignment should have both L and R values\n");
+        compilationError("Assignment should have both L and R values");
         return false;
     }
 
@@ -430,22 +433,20 @@ static bool compileSetVar(F_DEF_ARGS, bool create_vars = false){
 
     if (src->data.type == EXPR_OP && src->data.op == EXPR_O_COMMA){
         if(req_val){
-            error_log("assignment returning value not supported for arrays\n");
+            compilationError("assignment returning value not supported for arrays");
             return false;
         }
         ASM_OUT("#aset:\n");
         if(compileSetArray(F_ARGS(src), false, dst, 0) == -1){
-            error_log("array error\n");
+            compilationError("array error");
             return false;
         }
         ASM_OUT("#Easet:\n");
-        return true;
+        return cmp_ok;
     }
     else{
         ASM_OUT("#src:\n");
-        if(!compileCodeBlock(F_ARGS(src), true)){
-            return false;
-        }
+        CHECK(compileCodeBlock(F_ARGS(src), true))
         ASM_OUT("#Esrc:\n");
         return compileSetDst(F_ARGS(dst), req_val, create_vars);
     }
@@ -453,8 +454,9 @@ static bool compileSetVar(F_DEF_ARGS, bool create_vars = false){
 }
 
 static bool compileVarDef(F_DEF_ARGS){
+    bool cmp_ok = true;
     if (!expr){
-        return true;
+        return cmp_ok;
     }
     if (expr->data.type == EXPR_VAR){
         programCreateVar(objs, pos, expr->data.name);
@@ -464,7 +466,7 @@ static bool compileVarDef(F_DEF_ARGS){
             regs[regn].load_prog_lvl = pos->lvl;
             regs[regn].load_mem_n = 1;
         }
-        return true;
+        return cmp_ok;
     }
     if (expr->data.type == EXPR_OP){
         if (isAssignOp(expr->data.op)){
@@ -473,22 +475,21 @@ static bool compileVarDef(F_DEF_ARGS){
         if (expr->data.op == EXPR_O_COMMA){
             CHECK(compileVarDef(F_ARGS(expr->left) , false));
             CHECK(compileVarDef(F_ARGS(expr->right), false));
-            return true;
+            return cmp_ok;
         }
     }
 
-    error_log("Invalid elem for var def:");
-    printExprElem(_logfile, expr->data);
-    printExprElem(stderr  , expr->data);
-    printf_log("\n");
-    return true;
+    compilationError("Invalid elem for var def");
+    return false;
 }
 
 static bool compileFuncDef(F_DEF_ARGS){
+    bool cmp_ok = true;
     bool var_func = expr->data.op == EXPR_O_VFDEF;
-
-    if(!(expr->left && expr->left->data.type == EXPR_VAR))
+    if (!(expr->left && expr->left->data.type == EXPR_VAR)){
+        compilationError("Defined function has shit instead of name")
         return false;
+    }
 
     pos->flvl++;
     int old_offset = pos->rbp_offset;
@@ -509,13 +510,12 @@ static bool compileFuncDef(F_DEF_ARGS){
         if (var_func){
             vfuncTablePut(objs->vfuncs, {{name_str, false}, (expr->left->data.name), (pos->lvl), (pos->flvl)});
             COMPILE_CODE_BLOCK( true, //force-apply RCB
-                if (!compileCode(F_ARGS(expr->right), true))
-                    return false;
+                CHECK(compileCode(F_ARGS(expr->right), true))
             )
 
         }
         else{
-            error_log("normal function needs to be defined with <sep> even with no args\n");
+            compilationError("normal function needs to be defined with <sep> even with no args");
             return false;
         }
     }
@@ -527,10 +527,8 @@ static bool compileFuncDef(F_DEF_ARGS){
 
         // function with its arguments is just compiled into one returnable code block
         COMPILE_CODE_BLOCK( true,
-            if (!compileCode(F_ARGS(expr->right->left), false))
-                return false;
-            if (!compileCode(F_ARGS(expr->right->right), false))
-                return false;
+            CHECK(compileCode(F_ARGS(expr->right->left), false))
+            CHECK(compileCode(F_ARGS(expr->right->right), false))
         )
     }
     pos->rbp_offset = old_offset;
@@ -538,10 +536,11 @@ static bool compileFuncDef(F_DEF_ARGS){
     ASM_OUT("ret\n");
     ASM_OUT("%s*skip:\n", name_buff);
     pos->flvl--;
-    return true;
+    return cmp_ok;
 }
 
 static bool compileCode(F_DEF_ARGS){
+    bool cmp_ok = true;
     if(!expr){
         if(req_val){
             error_log("Empty expression can not return a value\n");
@@ -549,7 +548,7 @@ static bool compileCode(F_DEF_ARGS){
         return !req_val;
     }
     if(expr->data.type == EXPR_STAND){
-        error_log("СТАНДАРТ--ГОВНО\n");
+        compilationError("СТАНДАРТ--ГОВНО");
         return false;
     }
     if(expr->data.type == EXPR_VAR){
@@ -561,54 +560,54 @@ static bool compileCode(F_DEF_ARGS){
             if(!req_val){
                 ASM_OUT("pop rnn\n");
             }
-            return true;
+            return cmp_ok;
         }
         if(req_val){
             VarEntry* var = varTableGet(objs->vars, expr->data.name);
             if(!var){
-                error_log("Var \"%s\" not found\n", expr->data.name);
+                compilationError("Var \"%s\" not found", expr->data.name);
                 return false;
             }
             compileVarRead(file, pos, regs, var);
         }
-        return true;
+        return cmp_ok;
     }
     if(expr->data.type == EXPR_KVAR){
         switch(expr->data.kword){
         case EXPR_KW_RET:
-            error_log("Return with no value NYI\n");
+            compilationError("Return with no value NYI");
             return false;
         case EXPR_KW_NIO:
             if(req_val)
                 ASM_OUT("inp\n");
-            return true;
+            return cmp_ok;
         case EXPR_KW_CIO:
             if(req_val)
                 ASM_OUT("inpch\n");
-            return true;
+            return cmp_ok;
         case EXPR_KW_BAD:
             ASM_OUT("bad\n");
-            return true;
+            return cmp_ok;
         case EXPR_KW_HALT:
             ASM_OUT("halt\n");
-            return true;
+            return cmp_ok;
         case EXPR_KW_NULL:
             ASM_OUT("push 0\n");
-            return true;
+            return cmp_ok;
         default:
-            error_log("Unknown kvar for write: %s\n", getExprKWName(expr->data.kword));
+            compilationError("Unknown kvar for write: %s", getExprKWName(expr->data.kword));
             return false;
         }
     }
     if(expr->data.type == EXPR_FUNC){
         int nargs = compileArgList(F_ARGS(expr->right), true);
         if(nargs == -1){
-            error_log("Function arg list error\n");
+            compilationError("Function arg list error");
             return false;
         }
         FuncEntry* func = funcTableGet(objs->funcs, expr->data.name);
         if(!func){
-            error_log("Function %s not found\n", expr->data.name);
+            compilationError("Function %s not found", expr->data.name);
             return false;
         }
         ASM_OUT("push :%s\n", func->value.lbl);
@@ -616,13 +615,13 @@ static bool compileCode(F_DEF_ARGS){
         compileFuncCall(file, pos, regs, nargs, true, func->fdepth);
         if(!req_val)
             ASM_OUT("pop rnn\n");
-        return true;
+        return cmp_ok;
     }
     if(expr->data.type == EXPR_CONST){
         if(req_val){
             ASM_OUT("push %d\n", int(expr->data.val));
         }
-        return true;
+        return cmp_ok;
     }
     if(expr->data.type == EXPR_OP){
         //printf_log("%s " , exprOpName(expr->data.op));
@@ -634,14 +633,13 @@ static bool compileCode(F_DEF_ARGS){
         case EXPR_O_ENDL:
             CHECK( compileCode     (F_ARGS(expr->left ), false) )
             CHECK( compileCodeBlock(F_ARGS(expr->right), false) )
-            return true;
+            return cmp_ok;
         case EXPR_O_IF:
-            if(!compileCodeBlock(F_ARGS(expr->left), true))
-                return false;
+            CHECK(compileCodeBlock(F_ARGS(expr->left), true))
             (pos->lbl_id)++;
             ASM_OUT("push 0\n");
             if(!expr->right){
-                error_log("'if' should have both L and R values\n");
+                compilationError("'if' should have both L and R values");
                 return false;
             }
 
@@ -657,62 +655,60 @@ static bool compileCode(F_DEF_ARGS){
                 ASM_OUT("if_end_%d:\n" , instr_lbl_n);
             }
             else{
-                if(req_val)
+                if(req_val){
+                    compilationError("if with no else can not return a value");
                     return false;
+                }
                 ASM_OUT("jeq :if_%d\n", instr_lbl_n);
                 CHECK( compileCodeBlock(F_ARGS(expr->right), false) )
                 ASM_OUT("if_%d:\n", instr_lbl_n);
             }
             regsDescendLvl(file, pos, regs, 0, true);
-            return true;
+            return cmp_ok;
         case EXPR_O_WHILE:
             (pos->lbl_id)++;
+            if(req_val)
+                ASM_OUT("push 0\n");
             ASM_OUT("while_%d_beg:\n", instr_lbl_n);
             regsDescendLvl(file, pos, regs, 0, true);
             CHECK( compileCodeBlock(F_ARGS(expr->left), true) )
             ASM_OUT("push 0\njeq :while_%d_end\n", instr_lbl_n);
 
-            CHECK( compileCodeBlock(F_ARGS(expr->right), false) )
+            CHECK( compileCodeBlock(F_ARGS(expr->right), req_val) )
             ASM_OUT("jmp :while_%d_beg\n", instr_lbl_n);
             ASM_OUT("while_%d_end:\n", instr_lbl_n);
             regsDescendLvl(file, pos, regs, 0, true);
-            return true;
+            return cmp_ok;
         case EXPR_O_EQRTL:
             return compileSetVar(F_ARGS(expr), req_val, false);
         case EXPR_O_EQLTR:
             return compileSetVar(F_ARGS(expr), req_val, false);
         case EXPR_O_VDEF:
             if(req_val){
-                error_log("var definition can not return a value\n");
+                compilationError("var definition can not return a value");
                 return false;
             }
             return compileVarDef(F_ARGS(expr->right), false);
         case EXPR_O_FDEF:
             if(req_val){
-                error_log("function definition can not return a value\n");
+                compilationError("function definition can not return a value");
                 return false;
             }
             return compileFuncDef(F_ARGS(expr), false);
         case EXPR_O_VFDEF:
             if(req_val){
-                error_log("v-function definition can not return a value\n");
+                compilationError("v-function definition can not return a value");
                 return false;
             }
             return compileFuncDef(F_ARGS(expr), false);
 
         default:
-            printf_log("Unknown op: ");
-            printExprElem(stderr, expr->data);
-            printExprElem(_logfile, expr->data);
-            printf_log("\n");
+            compilationError("Unknown op");
             return false;
         }
 
     }
-    error_log("Unknown elem for code:");
-    printExprElem(stderr, expr->data);
-    printExprElem(_logfile, expr->data);
-    printf_log("\n");
+    compilationError("Unknown elem for code");
     return false;
 }
 
