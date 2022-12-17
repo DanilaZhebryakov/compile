@@ -303,10 +303,11 @@ varError_t ustackGet(UStack* stk, size_t addr, void* elem_ptr){
 
 varError_t ustackPop(UStack* stk, void* elem_ptr){
     varError_t err = VAR_ERRUNK;
-    if(elem_ptr)
+    if(elem_ptr){
         err = ustackTop(stk, elem_ptr);
-    if (err != VAR_NOERROR){
-        return err;
+        if (err != VAR_NOERROR){
+            return err;
+        }
     }
     stk->size--;
     #ifndef USTACK_NO_PROTECT

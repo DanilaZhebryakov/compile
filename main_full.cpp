@@ -12,15 +12,21 @@ int main()
     fscanf(input_file, "%*[^#]");
     fgetc(input_file);
     BinTreeNode* prog = scanProgram(input_file);
-    simplifyMathForm(&prog);
-    fclose(input_file);
-    binTreeDump(prog);
 
+    fclose(input_file);
+    header_log("Read");
+    binTreeDump(prog);
     if(!prog)
         return 2;
 
+    header_log("Mid");
+    BinTreeNode* prog_mid = processProgram(prog);
+    binTreeDump(prog_mid);
+    if(!prog_mid)
+        return 3;
+
     FILE* out_file = fopen("program.txt", "w");
-    bool res = compileProgram(out_file, prog);
+    bool res = compileProgram(out_file, prog_mid);
     fclose(out_file);
     binTreeDtor(prog);
     if(res)

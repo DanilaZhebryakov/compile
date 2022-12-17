@@ -3,7 +3,6 @@
 #define LOG_VARS
 
 DEF_VAR_TABLE(Var  , var  , int          );
-DEF_VAR_TABLE(Const, const, BinTreeNode* );
 DEF_VAR_TABLE(Func , func , FuncData     );
 DEF_VAR_TABLE(VFunc, vfunc, VarFuncData  );
 
@@ -16,31 +15,26 @@ int varTableGetNewAddr(VarTable* stk){
 
 void programNameTableCtor(ProgramNameTable* table){
     table->vars   = (VarTable*)malloc(sizeof(*table->vars));
-    table->consts = (ConstTable*)malloc(sizeof(*table->consts));
     table->funcs  = (VarTable*)malloc(sizeof(*table->funcs));
     table->vfuncs = (VFuncTable*)malloc(sizeof(*table->vfuncs));
 
     varTableCtor(table->vars);
-    constTableCtor(table->consts);
     varTableCtor(table->funcs);
     vfuncTableCtor(table->vfuncs);
 }
 
 void programNameTableDtor(ProgramNameTable* table){
     varTableDtor(table->vars);
-    constTableDtor(table->consts);
     varTableDtor(table->funcs);
     vfuncTableDtor(table->vfuncs);
 
     free(table->vars);
-    free(table->consts);
     free(table->funcs);
     free(table->vfuncs);
 }
 
 void programDescendLvl(ProgramNameTable* objs, ProgramPosData* pos, int lvl){
     pos->rbp_offset -= varTableDescendLvl  (objs->vars   , lvl);
-    constTableDescendLvl(objs->consts , lvl);
     varTableDescendLvl  (objs->funcs  , lvl);
     vfuncTableDescendLvl(objs->vfuncs , lvl);
 }

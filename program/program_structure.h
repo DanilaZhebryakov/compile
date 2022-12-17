@@ -14,7 +14,6 @@ struct FuncData{
 };
 
 INC_VAR_TABLE(Var  , var  , int          );
-INC_VAR_TABLE(Const, const, BinTreeNode* );
 INC_VAR_TABLE(Func , func , FuncData     );
 INC_VAR_TABLE(VFunc, vfunc, VarFuncData  );
 
@@ -24,7 +23,6 @@ VarEntry* varTableCreate(VarTable* stk, char* s_name, int lvl);
 
 struct ProgramNameTable{
     VarTable* vars;
-    ConstTable* consts;
     FuncTable* funcs;
     VFuncTable* vfuncs;
 };

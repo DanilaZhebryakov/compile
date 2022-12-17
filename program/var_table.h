@@ -35,6 +35,7 @@ bool tableName##TablePut(TableName##Table* stk, TableName##Entry var){\
 }\
 \
 TableName##Entry* tableName##TableGet(TableName##Table* stk, char* s_name){\
+    if(!(stk->data)) return nullptr;\
     assert_log(s_name);\
     for (TableName##Entry* i = (TableName##Entry*)stk->data + stk->size - 1; i >= ((TableName##Entry*)stk->data); i--){\
         if (strcmp(i->name, s_name) == 0){\
@@ -49,6 +50,7 @@ TableName##Entry* tableName##TableGetLast(TableName##Table* stk){\
 }\
 \
 int tableName##TableDescendLvl(TableName##Table* stk, int lvl){\
+    if(!(stk->data)) return 0;\
     int ret = 0;\
     while(stk->size > 0 && (((TableName##Entry*)stk->data) + stk->size - 1)->depth >= lvl && (ustackPop(stk, nullptr) == VAR_NOERROR)) {ret++;}\
     return ret;\
