@@ -713,7 +713,7 @@ static bool compileCode(F_DEF_ARGS){
 
             regsDescendLvl(file, pos, regs, 0, true);
             if(expr->right->data.type == EXPR_OP && expr->right->data.op == EXPR_O_SEP){
-                ASM_OUT("jne :if_else_%d\n", instr_lbl_n);
+                ASM_OUT("jeq :if_else_%d\n", instr_lbl_n);
                 CHECK( compileCodeBlock(F_ARGS(expr->right->left ), req_val) )
                 ASM_OUT("jmp :if_end_%d\n" , instr_lbl_n);
                 regsDescendLvl(file, pos, regs, 0, true);
@@ -727,7 +727,7 @@ static bool compileCode(F_DEF_ARGS){
                     compilationError("if with no else can not return a value");
                     return false;
                 }
-                ASM_OUT("jeq :if_%d\n", instr_lbl_n);
+                ASM_OUT("jne :if_%d\n", instr_lbl_n);
                 CHECK( compileCodeBlock(F_ARGS(expr->right), false) )
                 ASM_OUT("if_%d:\n", instr_lbl_n);
             }
