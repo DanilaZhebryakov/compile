@@ -195,13 +195,12 @@ static bool compileMathOp(F_DEF_ARGS){
     if (!req_val)
         return cmp_ok;
 
-    CHECK(compileCodeBlock(F_ARGS(expr->right), true))
-
     if (!isExprOpUnary(expr->data.op)){
         pos->stack_size++;
         CHECK(compileCodeBlock(F_ARGS(expr->left), true))
         pos->stack_size--;
     }
+    CHECK(compileCodeBlock(F_ARGS(expr->right), true))
 
     switch(expr->data.op){
         case EXPR_MO_ADD:
@@ -232,7 +231,7 @@ static bool compileMathOp(F_DEF_ARGS){
     return cmp_ok;
 }
 
-static bool compileSetDst(F_DEF_ARGS, bool create_vars = false, bool arr = false){
+static bool compileSetDst(F_DEF_ARGS, bool create_vars = false, bool arr = false, int arlen = 1){
     bool cmp_ok = true;
     if (expr->data.type == EXPR_OP){
         if (expr->data.op == EXPR_O_COMMA){
@@ -247,12 +246,12 @@ static bool compileSetDst(F_DEF_ARGS, bool create_vars = false, bool arr = false
                 pos->stack_size++;
             }
             pos->stack_size++;
-            CHECK( compileSetDst(F_ARGS(expr->left), false  , create_vars, arr) )
+            CHECK( compileSetDst(F_ARGS(expr->left), false  , create_vars, arr, arlen) )
             pos->stack_size--;
             if(arr){
                 pos->stack_size--;
             }
-            CHECK( compileSetDst(F_ARGS(expr->right), req_val, create_vars, arr) )
+            CHECK( compileSetDst(F_ARGS(expr->right), req_val, create_vars, arr, arlen) )
             return cmp_ok;
         }
         if (expr->data.op == EXPR_O_IF){
@@ -264,16 +263,16 @@ static bool compileSetDst(F_DEF_ARGS, bool create_vars = false, bool arr = false
             if (expr->right->data.type == EXPR_OP && expr->right->data.op == EXPR_O_SEP){
 
                 ASM_OUT("jne :a_if_else_%d\n", if_lbl_id);
-                CHECK( compileSetDst(F_ARGS(expr->right->left ), req_val, create_vars, arr) )
+                CHECK( compileSetDst(F_ARGS(expr->right->left ), req_val, create_vars, arr, arlen) )
                 ASM_OUT("jmp :a_if_end_%d\n" , if_lbl_id);
                 regsDescendLvl(file, pos, regs, 0, true);
                 ASM_OUT("a_if_else_%d:\n", if_lbl_id);
-                CHECK( compileSetDst(F_ARGS(expr->right->right), req_val, create_vars, arr) )
+                CHECK( compileSetDst(F_ARGS(expr->right->right), req_val, create_vars, arr, arlen) )
                 ASM_OUT("a_if_end_%d:\n" , if_lbl_id);
             }
             else {
                 ASM_OUT("jne :a_if_else_%d\n", if_lbl_id);
-                CHECK( compileSetDst(F_ARGS(expr->right), req_val, create_vars, arr) )
+                CHECK( compileSetDst(F_ARGS(expr->right), req_val, create_vars, arr, arlen) );
                 ASM_OUT("jmp :a_if_end_%d\n", if_lbl_id);
 
                 ASM_OUT("a_if_else_%d:\n", if_lbl_id);
@@ -285,6 +284,31 @@ static bool compileSetDst(F_DEF_ARGS, bool create_vars = false, bool arr = false
                 ASM_OUT("a_if_end_%d:\n", if_lbl_id);
             }
             regsDescendLvl(file, pos, regs, 0, true);
+            return cmp_ok;
+        }
+        if (expr->data.op == EXPR_O_ARDEF){
+            if (!expr->right){
+                compilationError("For now, you should always specify the length of created array");
+                return false;
+            }
+            if (expr->right->data.type != EXPR_CONST){
+                compilationError("Arrays of variable length not supported");
+                return false;
+            }
+            CHECK(compileSetDst(F_ARGS(expr->left), req_val, create_vars, arr, expr->right->data.val));
+            return cmp_ok;
+        }
+        if (expr->data.op == EXPR_O_ARIND){
+            if (arr){
+                compilationError("Multidimensional arrays not supported");
+                return false;
+            }
+            if (!expr->right){
+                compilationError("Index in array should be specified");
+                return false;
+            }
+            CHECK(compileCodeBlock(F_ARGS(expr->right), true));
+            CHECK(compileSetDst(F_ARGS(expr->left), req_val, create_vars, true, arlen));
             return cmp_ok;
         }
     }
@@ -342,12 +366,15 @@ static bool compileSetDst(F_DEF_ARGS, bool create_vars = false, bool arr = false
                 compileCode(F_ARGS(expr), true);
         }
         else{
+            if(arr){
+                create_vars = false;
+            }
             if (req_val){
                 ASM_OUT("dup\n");
                 pos->stack_size++;
             }
             if (create_vars){
-                programCreateVar(objs, pos, expr->data.name);
+                programCreateVar(objs, pos, expr->data.name, arlen);
             }
             VarEntry* var = varTableGet(objs->vars, expr->data.name);
             if (!var){
@@ -355,6 +382,10 @@ static bool compileSetDst(F_DEF_ARGS, bool create_vars = false, bool arr = false
                 return false;
             }
             if (arr){
+                int reg_n = getRegWithVar(file, pos, regs, var);
+                if(reg_n != -1){
+                    unloadVarFromReg(file, pos, regs, reg_n, true);
+                }
                 writeToVar(file, pos, var->fdepth, var->value, true);
             }
             else{
@@ -368,7 +399,7 @@ static bool compileSetDst(F_DEF_ARGS, bool create_vars = false, bool arr = false
     return false;
 }
 
-static int compileSetArray(F_DEF_ARGS, BinTreeNode* dst, int ind){
+static int compileSetArray(F_DEF_ARGS, BinTreeNode* dst, bool create_vars, int ind){
     bool cmp_ok = true;
     if (!expr)
         return 0;
@@ -376,19 +407,49 @@ static int compileSetArray(F_DEF_ARGS, BinTreeNode* dst, int ind){
         int i = 0;
         while(expr->data.name[i] != '\0'){
             ASM_OUT("push '%c'\n", expr->data.name[i]);
-            ASM_OUT("push %d\n"  , ind);
-            compileSetDst(F_ARGS(dst), false, false, true);
+            if(ind + i != 0){
+                ASM_OUT("push %d\n"  , ind + i);
+            }
+            compileSetDst(F_ARGS(dst), false, create_vars, ind + i != 0);
             i++;
         }
         return i;
     }
+    if  (expr->data.type == EXPR_OP && expr->data.op == EXPR_O_ARDEF){
+        if(!expr->right || expr->right->data.type != EXPR_CONST){
+            compilationError("Arraify operator requires number as right arg");
+            return -1;
+        }
+        for(int i = 0; i < expr->right->data.val; i++){
+            if(expr->left && expr->left->data.type == EXPR_VAR){
+                VarEntry* var = varTableGet(objs->vars, expr->left->data.name);
+                if(!var){
+                    compilationError("Var \"%s\" not found", expr->data.name);
+                    return false;
+                }
+                int regn = getRegWithVar(file, pos, regs, var);
+                if(regn != -1){
+                    unloadVarFromReg(file, pos, regs, regn, true);
+                }
+                readFromVar(file, pos, var->fdepth, var->value + i);
+            }
+            else{
+                CHECK(compileCodeBlock(F_ARGS(expr->left), true));
+            }
+            if(ind + i != 0){
+                ASM_OUT("push %d\n"  , ind + i);
+            }
+            compileSetDst(F_ARGS(dst), false, create_vars, ind + i != 0);
+        }
+        return expr->right->data.val;
+    }
     if  (expr->data.type == EXPR_OP && expr->data.op == EXPR_O_COMMA){
-        int t = compileSetArray(F_ARGS(expr->left), true, dst, ind);
+        int t = compileSetArray(F_ARGS(expr->left), true, dst, create_vars, ind);
         if(t == -1){
             return -1;
         }
         ind += t;
-        t = compileSetArray(F_ARGS(expr->right), true, dst, ind);
+        t = compileSetArray(F_ARGS(expr->right), true, dst, create_vars, ind);
         if(t == -1){
             return -1;
         }
@@ -398,8 +459,11 @@ static int compileSetArray(F_DEF_ARGS, BinTreeNode* dst, int ind){
 
     if (!compileCodeBlock(F_ARGS(expr), true))
         return -1;
-    ASM_OUT("push %d\n", ind);
-    compileSetDst(F_ARGS(dst), false, false, true);
+
+    if(ind != 0){
+        ASM_OUT("push %d\n", ind);
+    }
+    compileSetDst(F_ARGS(dst), false, create_vars, ind != 0);
     return 1;
 }
 
@@ -431,13 +495,13 @@ static bool compileSetVar(F_DEF_ARGS, bool create_vars = false){
         dst = expr->right;
     }
 
-    if (src->data.type == EXPR_OP && src->data.op == EXPR_O_COMMA){
+    if (src->data.type == EXPR_OP && (src->data.op == EXPR_O_COMMA || src->data.op == EXPR_O_ARDEF)){
         if(req_val){
             compilationError("assignment returning value not supported for arrays");
             return false;
         }
         ASM_OUT("#aset:\n");
-        if(compileSetArray(F_ARGS(src), false, dst, 0) == -1){
+        if(compileSetArray(F_ARGS(src), false, dst, create_vars, 0) == -1){
             compilationError("array error");
             return false;
         }
@@ -448,7 +512,8 @@ static bool compileSetVar(F_DEF_ARGS, bool create_vars = false){
         ASM_OUT("#src:\n");
         CHECK(compileCodeBlock(F_ARGS(src), true))
         ASM_OUT("#Esrc:\n");
-        return compileSetDst(F_ARGS(dst), req_val, create_vars);
+        CHECK(compileSetDst(F_ARGS(dst), req_val, create_vars));
+        return cmp_ok;
     }
 
 }
@@ -629,6 +694,9 @@ static bool compileCode(F_DEF_ARGS){
             return compileMathOp(F_ARGS(expr), true);
         int instr_lbl_n = pos->lbl_id;
 
+        int t = 0;
+        VarEntry* var = nullptr;
+
         switch(expr->data.op){
         case EXPR_O_ENDL:
             CHECK( compileCode     (F_ARGS(expr->left ), false) )
@@ -644,7 +712,7 @@ static bool compileCode(F_DEF_ARGS){
             }
 
             regsDescendLvl(file, pos, regs, 0, true);
-            if(expr->right->data.type == EXPR_OP && expr->left->data.op == EXPR_O_SEP){
+            if(expr->right->data.type == EXPR_OP && expr->right->data.op == EXPR_O_SEP){
                 ASM_OUT("jne :if_else_%d\n", instr_lbl_n);
                 CHECK( compileCodeBlock(F_ARGS(expr->right->left ), req_val) )
                 ASM_OUT("jmp :if_end_%d\n" , instr_lbl_n);
@@ -669,14 +737,17 @@ static bool compileCode(F_DEF_ARGS){
             (pos->lbl_id)++;
             if(req_val)
                 ASM_OUT("push 0\n");
-            ASM_OUT("while_%d_beg:\n", instr_lbl_n);
             regsDescendLvl(file, pos, regs, 0, true);
+
+            ASM_OUT("while_%d_beg:\n", instr_lbl_n);
             CHECK( compileCodeBlock(F_ARGS(expr->left), true) )
             ASM_OUT("push 0\njeq :while_%d_end\n", instr_lbl_n);
 
             CHECK( compileCodeBlock(F_ARGS(expr->right), req_val) )
+            regsDescendLvl(file, pos, regs, 0, true);
             ASM_OUT("jmp :while_%d_beg\n", instr_lbl_n);
             ASM_OUT("while_%d_end:\n", instr_lbl_n);
+
             regsDescendLvl(file, pos, regs, 0, true);
             return cmp_ok;
         case EXPR_O_EQRTL:
@@ -684,26 +755,46 @@ static bool compileCode(F_DEF_ARGS){
         case EXPR_O_EQLTR:
             return compileSetVar(F_ARGS(expr), req_val, false);
         case EXPR_O_VDEF:
-            if(req_val){
+            if (req_val){
                 compilationError("var definition can not return a value");
                 return false;
             }
-            return compileVarDef(F_ARGS(expr->right), false);
+            CHECK(compileVarDef(F_ARGS(expr->right), false));
+            return cmp_ok;
         case EXPR_O_FDEF:
-            if(req_val){
+            if (req_val){
                 compilationError("function definition can not return a value");
                 return false;
             }
-            return compileFuncDef(F_ARGS(expr), false);
+            CHECK(compileFuncDef(F_ARGS(expr), false));
+            return cmp_ok;
         case EXPR_O_VFDEF:
-            if(req_val){
+            if (req_val){
                 compilationError("v-function definition can not return a value");
                 return false;
             }
-            return compileFuncDef(F_ARGS(expr), false);
-
+            CHECK(compileFuncDef(F_ARGS(expr), false));
+            return cmp_ok;
+        case EXPR_O_ARIND:
+            if (!req_val)
+                return cmp_ok;
+            if (!expr->left || expr->left->data.type != EXPR_VAR){
+                compilationError("Array index read only works on vars");
+            }
+            CHECK(compileCodeBlock(F_ARGS(expr->right), true));
+            var = varTableGet(objs->vars, expr->left->data.name);
+            if(!var){
+                compilationError("Var \"%s\" not found", expr->data.name);
+                return false;
+            }
+            t = getRegWithVar(file, pos, regs, var);
+            if(t != -1){
+                unloadVarFromReg(file, pos, regs, t, true);
+            }
+            readFromVar(file, pos, var->fdepth, var->value, true);
+            return cmp_ok;
         default:
-            compilationError("Unknown op");
+            compilationError("Unknown op for code");
             return false;
         }
 

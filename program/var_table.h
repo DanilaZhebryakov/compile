@@ -35,6 +35,7 @@ bool tableName##TablePut(TableName##Table* stk, TableName##Entry var){\
 }\
 \
 TableName##Entry* tableName##TableGet(TableName##Table* stk, char* s_name){\
+    assert_log(s_name);\
     for (TableName##Entry* i = (TableName##Entry*)stk->data + stk->size - 1; i >= ((TableName##Entry*)stk->data); i--){\
         if (strcmp(i->name, s_name) == 0){\
             return i;\

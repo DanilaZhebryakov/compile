@@ -64,12 +64,12 @@ void programPosDataCtor(ProgramPosData* data){
     ustackCtor(&(data->add_mem), sizeof(void*));
 }
 
-void programCreateVar(ProgramNameTable* objs, ProgramPosData* pos, const char* name){
+void programCreateVar(ProgramNameTable* objs, ProgramPosData* pos, const char* name, int len){
     varTablePut(objs->vars, {pos->rbp_offset, name, pos->lvl, pos->flvl});
     #ifdef LOG_VARS
     printf_log("Var:%s Level:%d Flevel:%d Addr:%d\n", name, pos->lvl, pos->flvl, pos->rbp_offset);
     #endif
-    pos->rbp_offset++;
+    pos->rbp_offset += len;
 }
 
 void programAddNewMem(ProgramPosData* data, void* mem){
