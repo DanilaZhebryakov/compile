@@ -8,17 +8,17 @@ function_fact_1:
 #{
 #begin of rcb 2
 #Load var n to reg r2
-push r2
-push 0
 #save
 #reg 2 contains var n (@0)
 push r2
 pop [rbp + 0]
-jeq :if_else_3
-#src:
 #Load var n to reg r2
 push [rbp + 0]
 pop r2
+push r2
+push 0
+jeq :if_else_3
+#src:
 push r2
 push 1
 sub
@@ -53,11 +53,11 @@ mul
 #Esrc:
 pop rax
 jmp :eocb_2
-jmp :if_end_3
 #save
 #reg 2 contains var n (@0)
 push r2
 pop [rbp + 0]
+jmp :if_end_3
 if_else_3:
 #src:
 push 1

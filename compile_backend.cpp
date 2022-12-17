@@ -177,6 +177,63 @@ static bool compileCodeBlock(F_DEF_ARGS){
     return cmp_ok;
 }
 
+static bool compileConditionJump(F_DEF_ARGS, bool inv, const char* lbl_id){
+    bool cmp_ok = true;
+    if (expr->data.type == EXPR_CONST){
+        if ((expr->data.val != 0) ^ inv){
+            ASM_OUT("jmp %s\n", lbl_id);
+        }
+        return cmp_ok;
+    }
+    if (expr->data.type == EXPR_OP){
+        switch(expr->data.op){
+        case EXPR_MO_CGT:
+            CHECK(compileCodeBlock(F_ARGS(expr->left), true));
+            CHECK(compileCodeBlock(F_ARGS(expr->left), true));
+            if(inv){  ASM_OUT("jle :%s\n", lbl_id); }
+            else{     ASM_OUT("jgt :%s\n", lbl_id); }
+            return cmp_ok;
+        case EXPR_MO_CLT:
+            CHECK(compileCodeBlock(F_ARGS(expr->left), true));
+            CHECK(compileCodeBlock(F_ARGS(expr->left), true));
+            if(inv){  ASM_OUT("jge :%s\n", lbl_id); }
+            else{     ASM_OUT("jlt :%s\n", lbl_id); }
+            return cmp_ok;
+        case EXPR_MO_CGE:
+            CHECK(compileCodeBlock(F_ARGS(expr->left), true));
+            CHECK(compileCodeBlock(F_ARGS(expr->left), true));
+            if(inv){  ASM_OUT("jlt :%s\n", lbl_id); }
+            else{     ASM_OUT("jge :%s\n", lbl_id); }
+            return cmp_ok;
+        case EXPR_MO_CLE:
+            CHECK(compileCodeBlock(F_ARGS(expr->left), true));
+            CHECK(compileCodeBlock(F_ARGS(expr->left), true));
+            if(inv){  ASM_OUT("jgt :%s\n", lbl_id); }
+            else{     ASM_OUT("jle :%s\n", lbl_id); }
+            return cmp_ok;
+        case EXPR_MO_CEQ:
+            CHECK(compileCodeBlock(F_ARGS(expr->left), true));
+            CHECK(compileCodeBlock(F_ARGS(expr->left), true));
+            if(inv){  ASM_OUT("jne :%s\n", lbl_id); }
+            else{     ASM_OUT("jeq :%s\n", lbl_id); }
+            return cmp_ok;
+        case EXPR_MO_CNE:
+            CHECK(compileCodeBlock(F_ARGS(expr->left), true));
+            CHECK(compileCodeBlock(F_ARGS(expr->left), true));
+            if(inv){  ASM_OUT("jeq :%s\n", lbl_id); }
+            else{     ASM_OUT("jne :%s\n", lbl_id); }
+            return cmp_ok;
+        default:
+            break;
+        }
+    }
+    CHECK(compileCodeBlock(F_ARGS(expr), true));
+    ASM_OUT("push 0\n");
+    if(inv){  ASM_OUT("jeq :%s\n", lbl_id); }
+    else{     ASM_OUT("jne :%s\n", lbl_id); }
+    return cmp_ok;
+}
+
 static int compileArgList(F_DEF_ARGS){
     if (!expr)
         return 0;
@@ -224,6 +281,24 @@ static bool compileMathOp(F_DEF_ARGS){
         case EXPR_MO_TANP:
             ASM_OUT("tan\n");
             break;
+        case EXPR_MO_BOOL:
+            ASM_OUT("bool\n");
+            break;
+        case EXPR_MO_BOR:
+            ASM_OUT("or\n");
+            break;
+        case EXPR_MO_BAND:
+            ASM_OUT("and\n");
+            break;
+        case EXPR_MO_BXOR:
+            ASM_OUT("xor\n");
+            break;
+        case EXPR_MO_BSL:
+            ASM_OUT("bsl\n");
+            break;
+        case EXPR_MO_BSR:
+            ASM_OUT("bsr\n");
+            break;
         default:
             compilationError("Bad math op");
             return false;
@@ -255,23 +330,25 @@ static bool compileSetDst(F_DEF_ARGS, bool create_vars = false, bool arr = false
             return cmp_ok;
         }
         if (expr->data.op == EXPR_O_IF){
-            CHECK( compileCodeBlock(F_ARGS(expr->left), true) )
-            ASM_OUT("push 0\n");
+            char t_lbl[10] = "";
             int if_lbl_id = pos->lbl_id;
             (pos->lbl_id)++;
             regsDescendLvl(file, pos, regs, 0, true);
-            if (expr->right->data.type == EXPR_OP && expr->right->data.op == EXPR_O_SEP){
+            sprintf(t_lbl, "a_if_else_%d\n", if_lbl_id);
+            CHECK(compileConditionJump(F_ARGS(expr), false, true, t_lbl));
 
-                ASM_OUT("jne :a_if_else_%d\n", if_lbl_id);
+            if (expr->right->data.type == EXPR_OP && expr->right->data.op == EXPR_O_SEP){
                 CHECK( compileSetDst(F_ARGS(expr->right->left ), req_val, create_vars, arr, arlen) )
-                ASM_OUT("jmp :a_if_end_%d\n" , if_lbl_id);
                 regsDescendLvl(file, pos, regs, 0, true);
+                ASM_OUT("jmp :a_if_end_%d\n" , if_lbl_id);
+
                 ASM_OUT("a_if_else_%d:\n", if_lbl_id);
                 CHECK( compileSetDst(F_ARGS(expr->right->right), req_val, create_vars, arr, arlen) )
+                regsDescendLvl(file, pos, regs, 0, true);
                 ASM_OUT("a_if_end_%d:\n" , if_lbl_id);
             }
+
             else {
-                ASM_OUT("jne :a_if_else_%d\n", if_lbl_id);
                 CHECK( compileSetDst(F_ARGS(expr->right), req_val, create_vars, arr, arlen) );
                 ASM_OUT("jmp :a_if_end_%d\n", if_lbl_id);
 
@@ -281,9 +358,10 @@ static bool compileSetDst(F_DEF_ARGS, bool create_vars = false, bool arr = false
                     if(arr)
                         ASM_OUT("pop rnn\n");
                 }
+                regsDescendLvl(file, pos, regs, 0, true);
                 ASM_OUT("a_if_end_%d:\n", if_lbl_id);
             }
-            regsDescendLvl(file, pos, regs, 0, true);
+
             return cmp_ok;
         }
         if (expr->data.op == EXPR_O_ARDEF){
@@ -696,43 +774,50 @@ static bool compileCode(F_DEF_ARGS){
 
         int t = 0;
         VarEntry* var = nullptr;
-
+        char t_lbl [30] = "";
         switch(expr->data.op){
         case EXPR_O_ENDL:
             CHECK( compileCode     (F_ARGS(expr->left ), false) )
             CHECK( compileCodeBlock(F_ARGS(expr->right), false) )
             return cmp_ok;
+
         case EXPR_O_IF:
-            CHECK(compileCodeBlock(F_ARGS(expr->left), true))
             (pos->lbl_id)++;
-            ASM_OUT("push 0\n");
             if(!expr->right){
                 compilationError("'if' should have both L and R values");
                 return false;
             }
-
             regsDescendLvl(file, pos, regs, 0, true);
             if(expr->right->data.type == EXPR_OP && expr->right->data.op == EXPR_O_SEP){
-                ASM_OUT("jeq :if_else_%d\n", instr_lbl_n);
+
+                sprintf(t_lbl, "if_else_%d", instr_lbl_n);
+                CHECK(compileConditionJump(F_ARGS(expr->left),false , true, t_lbl));
+
                 CHECK( compileCodeBlock(F_ARGS(expr->right->left ), req_val) )
-                ASM_OUT("jmp :if_end_%d\n" , instr_lbl_n);
                 regsDescendLvl(file, pos, regs, 0, true);
+                ASM_OUT("jmp :if_end_%d\n" , instr_lbl_n);
 
                 ASM_OUT("if_else_%d:\n", instr_lbl_n);
                 CHECK( compileCodeBlock(F_ARGS(expr->right->right), req_val) )
+                regsDescendLvl(file, pos, regs, 0, true);
                 ASM_OUT("if_end_%d:\n" , instr_lbl_n);
             }
             else{
+
                 if(req_val){
                     compilationError("if with no else can not return a value");
                     return false;
                 }
-                ASM_OUT("jne :if_%d\n", instr_lbl_n);
+
+                sprintf(t_lbl, "if_end_%d", instr_lbl_n);
+                CHECK(compileConditionJump(F_ARGS(expr->left),false , true, t_lbl));
+
                 CHECK( compileCodeBlock(F_ARGS(expr->right), false) )
-                ASM_OUT("if_%d:\n", instr_lbl_n);
+                regsDescendLvl(file, pos, regs, 0, true);
+                ASM_OUT("if_end_%d:\n", instr_lbl_n);
             }
-            regsDescendLvl(file, pos, regs, 0, true);
             return cmp_ok;
+
         case EXPR_O_WHILE:
             (pos->lbl_id)++;
             if(req_val)
@@ -740,8 +825,10 @@ static bool compileCode(F_DEF_ARGS){
             regsDescendLvl(file, pos, regs, 0, true);
 
             ASM_OUT("while_%d_beg:\n", instr_lbl_n);
-            CHECK( compileCodeBlock(F_ARGS(expr->left), true) )
-            ASM_OUT("push 0\njeq :while_%d_end\n", instr_lbl_n);
+            if(req_val)
+                ASM_OUT("pop rnn\n");
+            sprintf(t_lbl, "while_%d_end", instr_lbl_n);
+            CHECK(compileConditionJump(F_ARGS(expr->left),false , true, t_lbl));
 
             CHECK( compileCodeBlock(F_ARGS(expr->right), req_val) )
             regsDescendLvl(file, pos, regs, 0, true);
@@ -750,10 +837,13 @@ static bool compileCode(F_DEF_ARGS){
 
             regsDescendLvl(file, pos, regs, 0, true);
             return cmp_ok;
+
         case EXPR_O_EQRTL:
             return compileSetVar(F_ARGS(expr), req_val, false);
+
         case EXPR_O_EQLTR:
             return compileSetVar(F_ARGS(expr), req_val, false);
+
         case EXPR_O_VDEF:
             if (req_val){
                 compilationError("var definition can not return a value");
@@ -761,6 +851,7 @@ static bool compileCode(F_DEF_ARGS){
             }
             CHECK(compileVarDef(F_ARGS(expr->right), false));
             return cmp_ok;
+
         case EXPR_O_FDEF:
             if (req_val){
                 compilationError("function definition can not return a value");
@@ -768,6 +859,7 @@ static bool compileCode(F_DEF_ARGS){
             }
             CHECK(compileFuncDef(F_ARGS(expr), false));
             return cmp_ok;
+
         case EXPR_O_VFDEF:
             if (req_val){
                 compilationError("v-function definition can not return a value");
@@ -775,6 +867,7 @@ static bool compileCode(F_DEF_ARGS){
             }
             CHECK(compileFuncDef(F_ARGS(expr), false));
             return cmp_ok;
+
         case EXPR_O_ARIND:
             if (!req_val)
                 return cmp_ok;
@@ -793,6 +886,7 @@ static bool compileCode(F_DEF_ARGS){
             }
             readFromVar(file, pos, var->fdepth, var->value, true);
             return cmp_ok;
+
         default:
             compilationError("Unknown op for code");
             return false;

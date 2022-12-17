@@ -37,9 +37,9 @@ enum exprDataType_t{
     EXPR_PAIN  = 0xFF
 };
 
-#define OP_ONLY_CHARS "-+%*/\\^&|%!?~,;@"
-#define CNTRL_CHARS "(){}#<>["
-#define SPACE_CHARS " \n\t\r"
+#define OP_ONLY_CHARS "-+%*/\\^&|%!?~,;@<>"
+#define CNTRL_CHARS "(){}#"
+#define SPACE_CHARS " \n\t\r["
 
 const double math_eps = 0.0001;
 

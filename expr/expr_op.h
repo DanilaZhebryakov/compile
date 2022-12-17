@@ -13,7 +13,7 @@ enum exprOpType_t{
 };
 #undef EXPR_OP_DEF
 
-const int MAX_EXPR_OP_PRIORITY = 5;
+const int MAX_EXPR_OP_PRIORITY = 6;
 
 bool isExprOpUnary(exprOpType_t op);
 

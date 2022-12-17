@@ -18,10 +18,12 @@ static char getNextMeaningChar(FILE* file, FilePosInfo* pos){
             pos->file_line++;
             pos->line_pos = 0;
         }
-        if(c == '<')
+        if(c == '[')
             comment_st++;
-        if(c == '>')
+        if(c == ']'){
             comment_st--;
+            c = fgetc(file);
+        }
         if(c == EOF)
             return c;
     } while (isspace(c) || comment_st > 0);
