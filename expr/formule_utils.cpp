@@ -490,11 +490,13 @@ static BinTreeNode* simplifyMathForm_(BinTreeNode* form){
     if (form->data.type != EXPR_OP)
         return form;
 
-    if (form->right)
+    if (form->right){
         simplifyMathForm(&(form->right));
+    }
     if (form->left){
         simplifyMathForm(&(form->left));
     }
+    /*
     if (!form->right){
         printf("BNR ");
         printMathForm(stdout, form, 0);
@@ -506,6 +508,10 @@ static BinTreeNode* simplifyMathForm_(BinTreeNode* form){
         printMathForm(stdout, form, 0);
         printf("\n");
         return newBadNode();
+    }
+    */
+    if(!isMathOp(form->data.op)){
+        return form;
     }
 
     if (form->left && form->right->data.type == EXPR_CONST && form->left->data.type == EXPR_CONST){

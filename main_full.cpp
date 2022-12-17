@@ -3,6 +3,7 @@
 #include "syntax_analyser.h"
 #include "compile_midend.h"
 #include "compile_backend.h"
+#include "expr/formule_utils.h"
 
 int main()
 {
@@ -11,6 +12,7 @@ int main()
     fscanf(input_file, "%*[^#]");
     fgetc(input_file);
     BinTreeNode* prog = scanProgram(input_file);
+    simplifyMathForm(&prog);
     fclose(input_file);
     binTreeDump(prog);
 

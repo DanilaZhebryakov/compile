@@ -1,11 +1,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "compile_backend.h"
+#include "expr/formule_utils.h"
 
 int main(){
     FILE* tree_file = fopen("program_tree.txt", "r");
     BinTreeNode* prog = binTreeReadFromFile(tree_file);
     fclose(tree_file);
+    simplifyMathForm(&prog);
     binTreeDump(prog);
 
     if(!prog)
