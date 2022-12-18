@@ -3,7 +3,7 @@
 
 void writeElemToFile_st(ExprElem* elem, FILE* file);
 
-BinTreeNode* standartifyProgram(BinTreeNode* expr, int level);
+BinTreeNode* standartifyProgram(BinTreeNode* expr);
 
 void writeProgramToFile_st(BinTreeNode* expr, FILE* file);
 

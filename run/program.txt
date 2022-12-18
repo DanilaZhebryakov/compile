@@ -3,78 +3,41 @@ pop rbp
 push 0
 pop [99]
 #{
-jmp :function_fact_1*skip
-function_fact_1:
+jmp :function_main_1*skip
+function_main_1:
 #{
 #begin of rcb 2
-#Load var n to reg r2
-#save
-#reg 2 contains var n (@0)
-push r2
-pop [rbp + 0]
-#Load var n to reg r2
-push [rbp + 0]
-pop r2
-push r2
+#src:
 push 0
-jeq :if_else_3
-#src:
-push r2
-push 1
-sub
-push :function_fact_1
-pop rax
-#save
-#reg 2 contains var n (@0)
-push r2
-pop [rbp + 0]
-#call of func
-push rbp
-push 1 
-add
-pop rbp
-pop r2
-push [98]
-push rbp
-pop [98]
-call rax
-swap
-pop [98]
-push rbp
-push 1 
-sub
-pop rbp
-#end of func call
-#Load var n to reg r2
-push [rbp + 0]
-pop r2
-push r2
-mul
 #Esrc:
 pop rax
 jmp :eocb_2
-#save
-#reg 2 contains var n (@0)
-push r2
-pop [rbp + 0]
-jmp :if_end_3
-if_else_3:
-#src:
-push 1
-#Esrc:
-pop rax
-jmp :eocb_2
-if_end_3:
-#save
 eocb_2:
 push rax
 #}
 swap
 ret
-function_fact_1*skip:
+function_main_1*skip:
+jmp :function_helloworld_3*skip
+function_helloworld_3:
+#{
+#begin of rcb 4
 #src:
-inp
-push :function_fact_1
+push 4
+#Esrc:
+out
+#src:
+push 0
+#Esrc:
+pop rax
+jmp :eocb_4
+eocb_4:
+push rax
+#}
+swap
+ret
+function_helloworld_3*skip:
+push :function_main_1
 pop rax
 #save
 #call of func
@@ -82,7 +45,6 @@ push rbp
 push 0 
 add
 pop rbp
-pop r2
 push [98]
 push rbp
 pop [98]
@@ -94,7 +56,5 @@ push 0
 sub
 pop rbp
 #end of func call
-#Esrc:
-out
-halt
+pop rnn
 #}

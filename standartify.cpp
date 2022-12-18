@@ -139,17 +139,17 @@ static void insertStNode(BinTreeNode* expr, BinTreeNode** tgt, exprOpType_t link
 
 }
 
-static BinTreeNode** standartifyProgram_(BinTreeNode* expr, BinTreeNode** tgt,  int level, BinTreeNode** ret_val_node);
+static BinTreeNode** standartifyProgram_(BinTreeNode* expr, BinTreeNode** tgt, BinTreeNode** ret_val_node);
 
-static BinTreeNode* standartifyCodeBlock_(BinTreeNode* expr,  int level, BinTreeNode** ret_val_node, exprOpType_t link_op = EXPR_O_ENDL){
+static BinTreeNode* standartifyCodeBlock_(BinTreeNode* expr, BinTreeNode** ret_val_node, exprOpType_t link_op = EXPR_O_ENDL){
     BinTreeNode* tgt = nullptr;
-    BinTreeNode** block_end = standartifyProgram_(expr, &tgt, level, ret_val_node);
+    BinTreeNode** block_end = standartifyProgram_(expr, &tgt, ret_val_node);
     if(*block_end)
         addStNode(nullptr, block_end, link_op);
     return tgt;
 }
 
-static BinTreeNode* standartifySetDst_(BinTreeNode* expr, BinTreeNode** pre, bool create_vars, int level, BinTreeNode** ret_val_node){
+static BinTreeNode* standartifySetDst_(BinTreeNode* expr, BinTreeNode** pre, bool create_vars, BinTreeNode** ret_val_node){
     if(expr->data.type == EXPR_VAR){
         if(create_vars){
             BinTreeNode* var_cr_node = binTreeNewNode({EXPR_OP});
@@ -169,8 +169,8 @@ static BinTreeNode* standartifySetDst_(BinTreeNode* expr, BinTreeNode** pre, boo
     }
     if(expr->data.type == EXPR_OP){
         BinTreeNode* op_node = binTreeNewNode(expr->data);
-        op_node->left  = standartifySetDst_(expr->left , pre, create_vars, level, ret_val_node);
-        op_node->right = standartifySetDst_(expr->right, pre, create_vars, level, ret_val_node);
+        op_node->left  = standartifySetDst_(expr->left , pre, create_vars, ret_val_node);
+        op_node->right = standartifySetDst_(expr->right, pre, create_vars, ret_val_node);
         return op_node;
     }
 
@@ -181,7 +181,7 @@ static BinTreeNode* standartifySetDst_(BinTreeNode* expr, BinTreeNode** pre, boo
     return binTreeNewNode({EXPR_PAIN});
 }
 
-static BinTreeNode** standartifySetVar_(BinTreeNode* expr, BinTreeNode** tgt, BinTreeNode** pre, bool create_vars, int level, BinTreeNode** ret_val_node){
+static BinTreeNode** standartifySetVar_(BinTreeNode* expr, BinTreeNode** tgt, BinTreeNode** pre, bool create_vars, BinTreeNode** ret_val_node){
     assert_log(tgt);
     assert_log(expr);
     if(expr->data.type == EXPR_VAR){
@@ -202,8 +202,8 @@ static BinTreeNode** standartifySetVar_(BinTreeNode* expr, BinTreeNode** tgt, Bi
         return tgt;
     }
     if(expr->data.op == EXPR_O_COMMA){
-        tgt = standartifySetVar_(expr->left , tgt, pre, create_vars, level, ret_val_node);
-        tgt = standartifySetVar_(expr->right, tgt, pre, create_vars, level, ret_val_node);
+        tgt = standartifySetVar_(expr->left , tgt, pre, create_vars, ret_val_node);
+        tgt = standartifySetVar_(expr->right, tgt, pre, create_vars, ret_val_node);
         return tgt;
     }
 
@@ -214,19 +214,54 @@ static BinTreeNode** standartifySetVar_(BinTreeNode* expr, BinTreeNode** tgt, Bi
 
     BinTreeNode* src = expr->right;
     BinTreeNode* dst = expr->left ;
-    if(expr->data.op == EXPR_O_EQLTR){
+    if (expr->data.op == EXPR_O_EQLTR){
         src = expr->left;
         dst = expr->right;
     }
 
+    if (src->data.type == EXPR_KVAR && (src->data.kword == EXPR_KW_NIO || src->data.kword == EXPR_KW_CIO)) {
+        BinTreeNode* new_node = binTreeNewNode({EXPR_STAND});
+        new_node->data.stand = (dst->data.kword == EXPR_KW_NIO) ? EXPR_ST_IN : EXPR_ST_INCH;
+        new_node->left = standartifyCodeBlock_(dst, ret_val_node, EXPR_O_COMMA);
+        return addStNode(new_node ,tgt);
+    }
+    if (dst->data.type == EXPR_KVAR){
+
+        if (dst->data.kword == EXPR_KW_NIO || dst->data.kword == EXPR_KW_CIO){
+            BinTreeNode* new_node = binTreeNewNode({EXPR_STAND});
+            new_node->data.stand = (dst->data.kword == EXPR_KW_NIO) ? EXPR_ST_OUT : EXPR_ST_OUTCH;
+            new_node->left = standartifyCodeBlock_(src, ret_val_node, EXPR_O_COMMA);
+            return addStNode(new_node ,tgt);
+        }
+        if (dst->data.kword == EXPR_KW_RET){
+            BinTreeNode* new_node = binTreeNewNode(dst->data);
+            standartifyProgram_(src, &(new_node->left), ret_val_node);
+            return addStNode(new_node ,tgt);
+        }
+        if (dst->data.kword == EXPR_KW_HALT){
+            return tgt; // just let it (not) be and create bugs
+        }
+        if (dst->data.kword == EXPR_KW_BAD){
+            BinTreeNode* new_node = binTreeNewNode({EXPR_KVAR});
+            new_node->data.kword = EXPR_KW_RET;
+            new_node->left = binTreeNewNode({EXPR_CONST});
+            new_node->left->data.val = rand(); // this will maybe create the bug and segfault/error in user program, so this is what we need :)
+            return addStNode(new_node ,tgt);
+        }
+    }
     BinTreeNode* new_node = binTreeNewNode({EXPR_OP});
     new_node->data.op = EXPR_O_EQRTL;
-    standartifyProgram_(expr->right, &(new_node->right), level, ret_val_node);
-    new_node->left  = standartifySetDst_(expr->left, pre, create_vars, level, ret_val_node);
+    standartifyProgram_(src, &(new_node->right), ret_val_node);
+
+    if (dst->data.type == EXPR_VAR){
+        new_node->left  = standartifySetDst_(dst, pre, create_vars, ret_val_node);
+    }
+
+
     return addStNode(new_node ,tgt);
 }
 
-static BinTreeNode** standartifyProgram_(BinTreeNode* expr, BinTreeNode** tgt,  int level, BinTreeNode** ret_val_node){
+static BinTreeNode** standartifyProgram_(BinTreeNode* expr, BinTreeNode** tgt, BinTreeNode** ret_val_node){
     assert_log(tgt != nullptr);
     if(!expr)
         return tgt;
@@ -236,21 +271,21 @@ static BinTreeNode** standartifyProgram_(BinTreeNode* expr, BinTreeNode** tgt,  
     }
 
     if(expr->data.type == EXPR_OP && expr->data.op == EXPR_O_ENDL){
-        tgt = standartifyProgram_(expr->left , tgt, level, ret_val_node);
+        tgt = standartifyProgram_(expr->left , tgt, ret_val_node);
         if(expr->right && expr->right->data.type == EXPR_OP && expr->right->data.type == EXPR_O_ENDL){ // code block creation
-            BinTreeNode* cb_node = standartifyCodeBlock_(expr->right, level, ret_val_node);
+            BinTreeNode* cb_node = standartifyCodeBlock_(expr->right, ret_val_node);
             tgt = addStNode(cb_node, tgt);
         }
         else{
-            tgt = standartifyProgram_(expr->right, tgt, level, ret_val_node);
+            tgt = standartifyProgram_(expr->right, tgt, ret_val_node);
         }
         if(*tgt)
             tgt = addStNode(nullptr, tgt);
         return tgt;
     }
     if(expr->data.type == EXPR_OP && expr->data.op == EXPR_O_COMMA){
-        tgt = standartifyProgram_(expr->left , tgt, level, ret_val_node); // comma (param) does not create code blocks, but works exactly the same otherwise
-        tgt = standartifyProgram_(expr->right, tgt, level, ret_val_node);
+        tgt = standartifyProgram_(expr->left , tgt, ret_val_node); // comma (param) does not create code blocks, but works exactly the same otherwise
+        tgt = standartifyProgram_(expr->right, tgt, ret_val_node);
         if(*tgt)
             tgt = addStNode(nullptr, tgt, EXPR_O_COMMA);
         return tgt;
@@ -263,26 +298,29 @@ static BinTreeNode** standartifyProgram_(BinTreeNode* expr, BinTreeNode** tgt,  
         name_node->data.name = strdup(expr->data.name);
 
         new_node->left  = name_node;
-        name_node->left = standartifyCodeBlock_(expr->right, level, ret_val_node, EXPR_O_COMMA);
+        name_node->left = standartifyCodeBlock_(expr->right, ret_val_node, EXPR_O_COMMA);
         return addStNode(new_node, tgt);
     }
 
     if(expr->data.type == EXPR_KVAR){
+        if (expr->data.kword == EXPR_KW_HALT){
+            return tgt; // not required
+        }
         BinTreeNode* new_node = binTreeNewNode(expr->data);
-            /*
         switch(expr->data.kword){
         case EXPR_KW_RET:
-            new_node->data.type  = EXPR_STAND;
-            new_node->data.stand = EXPR_ST_RET;
+            new_node->data.type  = EXPR_KVAR;
+            new_node->data.kword = EXPR_KW_RET;
             break;
-        case EXPR_KW_NULL:
-            new_node->data.type = EXPR_VAR;
-            new_node->data.name = strdup(TRASH_CAN_VAR);
+        case EXPR_KW_BAD:
+            new_node->data.type  = EXPR_KVAR;
+            new_node->data.kword = EXPR_KW_RET;
+            new_node->left = binTreeNewNode({EXPR_CONST});
+            new_node->left->data.val = rand(); //let's see what happens
             break;
         default:
             break;
         }
-        */
         return addStNode(new_node, tgt);
     }
 
@@ -298,14 +336,14 @@ static BinTreeNode** standartifyProgram_(BinTreeNode* expr, BinTreeNode** tgt,  
         if(*tgt){
             tgt = addStNode(nullptr, tgt);
         }
-        tgt = standartifySetVar_(expr->right, tgt, tgt, true, level, ret_val_node);
+        tgt = standartifySetVar_(expr->right, tgt, tgt, true, ret_val_node);
         return tgt;
     }
     if(expr->data.op == EXPR_O_EQLTR || expr->data.op == EXPR_O_EQRTL){
         if(*tgt){
             tgt = addStNode(nullptr, tgt);
         }
-        tgt = standartifySetVar_(expr, tgt, tgt, true, level, ret_val_node);
+        tgt = standartifySetVar_(expr, tgt, tgt, true, ret_val_node);
         return tgt;
     }
 
@@ -317,27 +355,30 @@ static BinTreeNode** standartifyProgram_(BinTreeNode* expr, BinTreeNode** tgt,  
         name_node->data.name = strdup(expr->left->data.name);
 
         new_node ->left  = name_node;
-        name_node->left  = standartifyCodeBlock_(expr->right->left, level, ret_val_node, EXPR_O_COMMA);
-        new_node ->right = standartifyCodeBlock_(expr->right->right, level, ret_val_node);
+        name_node->left  = standartifyCodeBlock_(expr->right->left, ret_val_node, EXPR_O_COMMA);
+        name_node->right = binTreeNewNode({EXPR_STAND});
+        name_node->right->data.stand = EXPR_ST_TYPE;
+
+        new_node ->right = standartifyCodeBlock_(expr->right->right, ret_val_node);
         return addStNode(new_node, tgt);
     }
     BinTreeNode* new_node = binTreeNewNode(expr->data);
 
     if(!expr->left){
-       standartifyProgram_(expr->right, &(new_node->left), level, ret_val_node); //again, standartic order of nodes
+       standartifyProgram_(expr->right, &(new_node->left), ret_val_node); //again, standartic order of nodes
        return addStNode(new_node, tgt);
     }
 
     //op does not need special handling by default
-    standartifyProgram_(expr->left , &(new_node->left ), level, ret_val_node);
-    standartifyProgram_(expr->right, &(new_node->right), level, ret_val_node);
+    standartifyProgram_(expr->left , &(new_node->left ), ret_val_node);
+    standartifyProgram_(expr->right, &(new_node->right), ret_val_node);
     return addStNode(new_node, tgt);
 }
 
-BinTreeNode* standartifyProgram(BinTreeNode* expr, int level){
+BinTreeNode* standartifyProgram(BinTreeNode* expr){
     BinTreeNode* res = nullptr;
     BinTreeNode* retval = nullptr;
-    standartifyProgram_(expr, &res, level, &retval);
+    standartifyProgram_(expr, &res, &retval);
 
     BinTreeNode* main_func_node = binTreeNewNode({EXPR_STAND});
     main_func_node->data.stand = EXPR_ST_FUNC;

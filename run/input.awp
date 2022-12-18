@@ -1,0 +1,1 @@
+{ ST { FUNC { "main" { NIL } { TYPE { NIL } { NIL } } } { ST { CALL { "helloworld" { NIL } { NIL } } { NIL } } { ST { RET { 0 } { NIL } } { NIL } } } } { ST { FUNC { "helloworld" { NIL } { VOID { NIL } { NIL } } } { ST { OUT { PARAM { 4 } { NIL } } { NIL } } { ST { RET { NIL } { NIL } } { NIL } } } } { NIL } } } 

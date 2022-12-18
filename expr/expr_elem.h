@@ -26,6 +26,7 @@ const char* getExprKWName(exprKWType_t kw);
 const char* getExprStdKWName(exprKWType_t kw);
 
 enum exprDataType_t{
+    EXPR_NULL  = 0,
     EXPR_CONST = 1,
     EXPR_VAR   = 2,
     EXPR_KVAR  = 3,

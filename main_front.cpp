@@ -18,13 +18,13 @@ int main(){
     binTreePrintToFile(prog, tree_file);
     fclose(tree_file);
 
-    /*FILE* st_tree_file = fopen("st_program_tree.txt", "w");
-    BinTreeNode* stand = standartifyProgram(prog, 0);
+    FILE* st_tree_file = fopen("st_program_tree.awp", "w");
+    BinTreeNode* stand = standartifyProgram(prog);
     binTreeDump(stand);
     writeProgramToFile_st(stand, st_tree_file);
     binTreeDtor(stand);
     fclose(st_tree_file);
-    */
+
 
     binTreeDtor(prog);
 }

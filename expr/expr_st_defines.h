@@ -1,0 +1,11 @@
+
+//#define EXPR_ST_DEF(_enum, _enumval, _std)
+
+EXPR_ST_DEF(EXPR_ST_FUNC    , 1, "FUNC")
+EXPR_ST_DEF(EXPR_ST_CALL    , 2, "CALL")
+EXPR_ST_DEF(EXPR_ST_IN      , 3, "IN"  )
+EXPR_ST_DEF(EXPR_ST_INCH    , 4, "INCH")
+EXPR_ST_DEF(EXPR_ST_OUT     , 5, "OUT" )
+EXPR_ST_DEF(EXPR_ST_OUTCH   , 6, "OUTCH")
+EXPR_ST_DEF(EXPR_ST_VOID    , 7, "VOID")
+EXPR_ST_DEF(EXPR_ST_TYPE    , 8, "TYPE")

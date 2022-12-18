@@ -124,22 +124,10 @@
         {
           ST
           {
-            IN
+            VAR
             {
-              CALL
-              {
-                "fact"
-                {
-                  PARAM
-                  {
-                    SCREEN_N
-                    {NIL}
-                    {NIL}
-                  }
-                  {NIL}
-                }
-                {NIL}
-              }
+              "x"
+              {NIL}
               {NIL}
             }
             {NIL}
@@ -147,11 +135,63 @@
           {
             ST
             {
-              HALT
-              {NIL}
-              {NIL}
+              EQ
+              {
+                "x"
+                {NIL}
+                {NIL}
+              }
+              {
+                0
+                {NIL}
+                {NIL}
+              }
             }
-            {NIL}
+            {
+              ST
+              {
+                INCH
+                {
+                  PARAM
+                  {
+                    "x"
+                    {NIL}
+                    {NIL}
+                  }
+                  {NIL}
+                }
+                {NIL}
+              }
+              {
+                ST
+                {
+                  OUT
+                  {
+                    PARAM
+                    {
+                      CALL
+                      {
+                        "fact"
+                        {
+                          PARAM
+                          {
+                            "x"
+                            {NIL}
+                            {NIL}
+                          }
+                          {NIL}
+                        }
+                        {NIL}
+                      }
+                      {NIL}
+                    }
+                    {NIL}
+                  }
+                  {NIL}
+                }
+                {NIL}
+              }
+            }
           }
         }
       }

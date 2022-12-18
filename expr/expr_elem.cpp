@@ -4,6 +4,16 @@
 #include "expr_elem.h"
 #include "lib/bintree.h"
 
+const char* getExprStandName(exprStandartThing_t stand){
+    #define EXPR_ST_DEF(_enum, _enumval, _std) \
+    if(_enum == stand){    \
+        return _std;                           \
+    }
+    #include "expr/expr_st_defines.h"
+    #undef EXPR_ST_DEF
+    return "BADSTD";
+}
+
 const char* getExprKWName(exprKWType_t kw){
     #define EXPR_KW_DEF(_enum, _enumval, _name, _std) \
     if(_enum == kw){    \
@@ -103,7 +113,7 @@ void printExprElem(FILE* file, ExprElem elem){
         fprintf(file, "%s", getExprKWName(elem.kword));
         break;
     case EXPR_STAND:
-        fprintf(file, "ST%d", elem.stand);
+        fprintf(file, "%s", getExprStandName(elem.stand));
         break;
     case EXPR_STLIT:
         fprintf(file, "\"%s\"", elem.name);
