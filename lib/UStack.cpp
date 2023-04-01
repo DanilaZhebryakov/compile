@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <windows.h>
+#include "System_utils.h"
+#include "errno.h"
 
 #include "asserts.h"
 #include "logging.h"
@@ -60,7 +61,7 @@ inline static size_t ustackDataMemSize(const UStack* stk){
 
 bool ustackCtor_(UStack* stk, size_t elsize){
     #ifndef USTACK_NO_PROTECT
-    if (IsBadWritePtr(stk, sizeof(stk))){
+    if (!isPtrWritable(stk, sizeof(stk))){
         return false;
     }
     #endif
@@ -80,7 +81,7 @@ varError_t ustackError(const UStack* stk){
     if (stk == nullptr)
         return VAR_NULL;
 
-    if (IsBadReadPtr(stk, sizeof(stk)))
+    if (!isPtrReadable(stk, sizeof(stk)))
         return VAR_BAD;
 
     if (stk->size == SIZE_MAX || stk->capacity == SIZE_MAX || stk->data == DESTRUCT_PTR)
@@ -92,7 +93,7 @@ varError_t ustackError(const UStack* stk){
     if (stk->capacity != 0){
         if (stk->data == nullptr)
             err |= VAR_DATA_NULL;
-        if (IsBadWritePtr(ustackDataMemBegin(stk), ustackDataMemSize(stk)))
+        if (!isPtrWritable(ustackDataMemBegin(stk), ustackDataMemSize(stk)))
             err |= VAR_DATA_BAD;
     }
     if (stk->size > stk->capacity)
@@ -211,8 +212,12 @@ varError_t ustackDtor(UStack* stk){
 
     #ifndef USTACK_NO_PROTECT
         stk->data = DESTRUCT_PTR;
+
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wsign-conversion"
         stk->size = -1;
         stk->capacity = -1;
+    #pragma GCC diagnostic pop
     #endif
     return VAR_NOERROR;
 }

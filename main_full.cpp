@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "syntax_analyser.h"
-#include "compile_midend.h"
-#include "compile_backend.h"
+#include "frontend/syntax_analyser.h"
+#include "midend/compile_midend.h"
+#include "backend/compile_backend.h"
 #include "expr/formule_utils.h"
 
 int main()

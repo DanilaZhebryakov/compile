@@ -4,14 +4,14 @@
 #include "expr/formule_utils.h"
 
 int main(){
-    FILE* tree_file = fopen("program_tree.txt", "r");
+    FILE* tree_file = fopen("program_tree.three", "r");
     BinTreeNode* prog = binTreeReadFromFile(tree_file);
-    fclose(tree_file);
-    simplifyMathForm(&prog);
-    binTreeDump(prog);
 
     if(!prog)
         return 2;
+
+    fclose(tree_file);
+    binTreeDump(prog);
 
     FILE* out_file = fopen("program.txt", "w");
     bool res = compileProgram(out_file, prog);

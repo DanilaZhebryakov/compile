@@ -1,7 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <windows.h>
+#include <errno.h>
 
+#include "System_utils.h"
 #include "asserts.h"
 #include "logging.h"
 #include "debug_utils.h"
@@ -79,9 +80,12 @@ inline static size_t stackDataMemSize(const Stack* stk){
         return STACK_NOERROR;
     }
 #else
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wunused-parameter"
     stackError_t stackUpdHashes(Stack* stk){
         return STACK_NOERROR;
     }
+    #pragma GCC diagnostic pop
 #endif
 
 bool stackCtor_(Stack* stk){
@@ -105,7 +109,7 @@ stackError_t stackError(const Stack* stk){
     if (stk == nullptr)
         return STACK_NULL;
 
-    if (IsBadReadPtr(stk, sizeof(stk)))
+    if (!isPtrReadable(stk, sizeof(stk)))
         return STACK_BAD;
 
     if (stk->size == SIZE_MAX || stk->capacity == SIZE_MAX || stk->data == DESTRUCT_PTR)
@@ -117,7 +121,7 @@ stackError_t stackError(const Stack* stk){
     if (stk->capacity != 0){
         if (stk->data == nullptr)
             err |= STACK_DATA_NULL;
-        if (IsBadWritePtr(stackDataMemBegin(stk), stackDataMemSize(stk)))
+        if (!isPtrWritable(stackDataMemBegin(stk), stackDataMemSize(stk)))
             err |= STACK_DATA_BAD;
     }
     if (stk->size > stk->capacity)
@@ -158,6 +162,8 @@ stackError_t stackError(const Stack* stk){
     return (stackError_t)err;
 }
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 static stackError_t stackError_dbg(Stack* stk){
     #ifndef STACK_NO_PROTECT
         return stackError(stk);
@@ -165,6 +171,7 @@ static stackError_t stackError_dbg(Stack* stk){
         return STACK_NOERROR;
     #endif
 }
+#pragma GCC diagnostic pop
 
 
 void stackDump(const Stack* stk){
@@ -259,8 +266,12 @@ stackError_t stackDtor(Stack* stk){
         free(stackDataMemBegin(stk));
 
     stk->data = DESTRUCT_PTR;
+
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wsign-conversion"
     stk->size = -1;
     stk->capacity = -1;
+    #pragma GCC diagnostic pop
     #ifndef STACK_NO_PROTECT
     (stk->info).status = VARSTATUS_DEAD;
     #endif

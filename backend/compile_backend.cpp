@@ -1,9 +1,11 @@
 #include "lib/bintree.h"
 #include "expr/expr_elem.h"
 #include "program/program_structure.h"
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#pragma GCC diagnostic push
 
-#define F_ARGS(...) file, __VA_ARGS__ , objs, pos, regs
-#define F_DEF_ARGS FILE* file, BinTreeNode* expr , ProgramNameTable* objs, ProgramPosData* pos, RegInfo* regs, bool req_val
+#define F_ARGS(...) file, __VA_ARGS__ , objs, pos, regs, expr
+#define F_DEF_ARGS FILE* file, BinTreeNode* expr , ProgramNameTable* objs, ProgramPosData* pos, RegInfo* regs, BinTreeNode* oexpr, bool req_val
 
 #define ASM_OUT(...) \
 fprintf(file, __VA_ARGS__)
@@ -24,8 +26,8 @@ printf_log("' (%s:%d:%d)\n", expr->data.file_name, expr->data.file_line, expr->d
 }
 
 static void writeToVar(FILE* file, ProgramPosData* pos, int v_flvl, int addr, bool arr = false){
-    if(v_flvl == pos->flvl){
-        if(arr){
+    if (v_flvl == pos->flvl){
+        if (arr){
             ASM_OUT("push rbp\n");
             ASM_OUT("add\n");
             ASM_OUT("pop rax\n");
@@ -37,7 +39,7 @@ static void writeToVar(FILE* file, ProgramPosData* pos, int v_flvl, int addr, bo
     }
     else{
         ASM_OUT("push [%d]\n", RBP_BASE_POS - v_flvl);
-        if(arr){
+        if (arr){
             ASM_OUT("add\n");
         }
         ASM_OUT("pop rax\n");
@@ -45,8 +47,8 @@ static void writeToVar(FILE* file, ProgramPosData* pos, int v_flvl, int addr, bo
     }
 }
 static void readFromVar(FILE* file, ProgramPosData* pos, int v_flvl, int addr, bool arr = false){
-    if(v_flvl == pos->flvl){
-        if(arr){
+    if (v_flvl == pos->flvl){
+        if (arr){
             ASM_OUT("push rbp\n");
             ASM_OUT("add\n");
             ASM_OUT("pop rax\n");
@@ -58,7 +60,7 @@ static void readFromVar(FILE* file, ProgramPosData* pos, int v_flvl, int addr, b
     }
     else{
         ASM_OUT("push [%d]\n", RBP_BASE_POS - v_flvl);
-        if(arr){
+        if (arr){
             ASM_OUT("add\n");
         }
         ASM_OUT("pop rax\n");
@@ -164,7 +166,8 @@ static bool compileCodeBlock(F_DEF_ARGS){
     bool cmp_ok = true;
     if (!expr){
         if(req_val){
-            compilationError("Empty expression can not return value");
+            expr = oexpr;
+            compilationError("Empty expression can not return value ");
         }
         return !req_val;
     }
@@ -189,37 +192,37 @@ static bool compileConditionJump(F_DEF_ARGS, bool inv, const char* lbl_id){
         switch(expr->data.op){
         case EXPR_MO_CGT:
             CHECK(compileCodeBlock(F_ARGS(expr->left), true));
-            CHECK(compileCodeBlock(F_ARGS(expr->left), true));
+            CHECK(compileCodeBlock(F_ARGS(expr->right), true));
             if(inv){  ASM_OUT("jle :%s\n", lbl_id); }
             else{     ASM_OUT("jgt :%s\n", lbl_id); }
             return cmp_ok;
         case EXPR_MO_CLT:
             CHECK(compileCodeBlock(F_ARGS(expr->left), true));
-            CHECK(compileCodeBlock(F_ARGS(expr->left), true));
+            CHECK(compileCodeBlock(F_ARGS(expr->right), true));
             if(inv){  ASM_OUT("jge :%s\n", lbl_id); }
             else{     ASM_OUT("jlt :%s\n", lbl_id); }
             return cmp_ok;
         case EXPR_MO_CGE:
             CHECK(compileCodeBlock(F_ARGS(expr->left), true));
-            CHECK(compileCodeBlock(F_ARGS(expr->left), true));
+            CHECK(compileCodeBlock(F_ARGS(expr->right), true));
             if(inv){  ASM_OUT("jlt :%s\n", lbl_id); }
             else{     ASM_OUT("jge :%s\n", lbl_id); }
             return cmp_ok;
         case EXPR_MO_CLE:
             CHECK(compileCodeBlock(F_ARGS(expr->left), true));
-            CHECK(compileCodeBlock(F_ARGS(expr->left), true));
+            CHECK(compileCodeBlock(F_ARGS(expr->right), true));
             if(inv){  ASM_OUT("jgt :%s\n", lbl_id); }
             else{     ASM_OUT("jle :%s\n", lbl_id); }
             return cmp_ok;
         case EXPR_MO_CEQ:
             CHECK(compileCodeBlock(F_ARGS(expr->left), true));
-            CHECK(compileCodeBlock(F_ARGS(expr->left), true));
+            CHECK(compileCodeBlock(F_ARGS(expr->right), true));
             if(inv){  ASM_OUT("jne :%s\n", lbl_id); }
             else{     ASM_OUT("jeq :%s\n", lbl_id); }
             return cmp_ok;
         case EXPR_MO_CNE:
             CHECK(compileCodeBlock(F_ARGS(expr->left), true));
-            CHECK(compileCodeBlock(F_ARGS(expr->left), true));
+            CHECK(compileCodeBlock(F_ARGS(expr->right), true));
             if(inv){  ASM_OUT("jeq :%s\n", lbl_id); }
             else{     ASM_OUT("jne :%s\n", lbl_id); }
             return cmp_ok;
@@ -242,17 +245,27 @@ static int compileArgList(F_DEF_ARGS){
             return -1;
         return 1;
     }
-    if (!compileCodeBlock(F_ARGS(expr->left), true))
+    printf("R");
+    int r = compileArgList(F_ARGS(expr->left), true) + 1;
+    if (!compileCodeBlock(F_ARGS(expr->right), true))
         return -1;
-    return compileArgList(F_ARGS(expr->right), true) + 1;
+    printf("AL%d \n", r);
+    return r;
 }
 
 static bool compileMathOp(F_DEF_ARGS){
     bool cmp_ok = true;
     if (!req_val)
         return cmp_ok;
+    
+    if ((!canExprOpBeUnary(expr->data.op)) && (!expr->left)){
+        compilationError("Binary-only op used as unary");
+    }
+    if ((isExprOpUnary(expr->data.op)) && (expr->left)){
+        compilationError("Unary-only op used as binary");
+    }
 
-    if (!isExprOpUnary(expr->data.op)){
+    if (expr->left){
         pos->stack_size++;
         CHECK(compileCodeBlock(F_ARGS(expr->left), true))
         pos->stack_size--;
@@ -299,6 +312,11 @@ static bool compileMathOp(F_DEF_ARGS){
         case EXPR_MO_BSR:
             ASM_OUT("bsr\n");
             break;
+        case EXPR_MO_UMIN:
+            ASM_OUT("push 0\n");
+            ASM_OUT("swap\n");
+            ASM_OUT("sub\n");
+            break;
         default:
             compilationError("Bad math op");
             return false;
@@ -330,7 +348,7 @@ static bool compileSetDst(F_DEF_ARGS, bool create_vars = false, bool arr = false
             return cmp_ok;
         }
         if (expr->data.op == EXPR_O_IF){
-            char t_lbl[10] = "";
+            char t_lbl[30] = "";
             int if_lbl_id = pos->lbl_id;
             (pos->lbl_id)++;
             regsDescendLvl(file, pos, regs, 0, true);
@@ -467,7 +485,11 @@ static bool compileSetDst(F_DEF_ARGS, bool create_vars = false, bool arr = false
                 writeToVar(file, pos, var->fdepth, var->value, true);
             }
             else{
-                int reg_n = findRegForVar(file, pos, regs, var, pos->lvl, false);
+                int reg_n = getRegWithVar(file, pos, regs, var);
+                if(reg_n == -1){
+                    reg_n = findRegForVar(file, pos, regs, var, pos->lvl, !create_vars);
+                }
+
                 ASM_OUT("pop r%d\n", reg_n + REG_USE_FIRST);
             }
         }
@@ -573,7 +595,7 @@ static bool compileSetVar(F_DEF_ARGS, bool create_vars = false){
         dst = expr->right;
     }
 
-    if (src->data.type == EXPR_OP && (src->data.op == EXPR_O_COMMA || src->data.op == EXPR_O_ARDEF)){
+    if ((src->data.type == EXPR_OP && (src->data.op == EXPR_O_COMMA || src->data.op == EXPR_O_ARDEF)) || src->data.type == EXPR_STLIT){
         if(req_val){
             compilationError("assignment returning value not supported for arrays");
             return false;
@@ -686,12 +708,13 @@ static bool compileCode(F_DEF_ARGS){
     bool cmp_ok = true;
     if(!expr){
         if(req_val){
-            error_log("Empty expression can not return a value\n");
+            expr = oexpr;
+            compilationError("Empty expression can not return a value\n");
         }
         return !req_val;
     }
     if(expr->data.type == EXPR_STAND){
-        compilationError("СТАНДАРТ--ГОВНО");
+        compilationError("💩СТАНДАРТ--ГОВНО💩");
         return false;
     }
     if(expr->data.type == EXPR_VAR){
@@ -708,7 +731,7 @@ static bool compileCode(F_DEF_ARGS){
         if(req_val){
             VarEntry* var = varTableGet(objs->vars, expr->data.name);
             if(!var){
-                compilationError("Var \"%s\" not found", expr->data.name);
+                compilationError("Var \"%s\" not found %d", expr->data.name);
                 return false;
             }
             compileVarRead(file, pos, regs, var);
@@ -896,6 +919,8 @@ static bool compileCode(F_DEF_ARGS){
     compilationError("Unknown elem for code");
     return false;
 }
+#pragma GCC diagnostic pop
+
 
 bool compileProgram(FILE* file, BinTreeNode* code){
     ProgramNameTable objs = {};
@@ -909,7 +934,7 @@ bool compileProgram(FILE* file, BinTreeNode* code){
     ASM_OUT("pop [%d]\n", RBP_BASE_POS);
     RegInfo regs[14] = {};
 
-    bool ret = compileCodeBlock(file, code, &objs, &pos, regs, false);
+    bool ret = compileCodeBlock(file, code, &objs, &pos, regs, code, false);
     if (!ret){
         error_log("Compiltion failed");
     }

@@ -160,7 +160,7 @@ static BinTreeNode* destandartifyProgram_(BinTreeNode* expr, bool arg = false){
             BinTreeNode* cur_o_node = expr->left->right;
             BinTreeNode* inp_node = binTreeNewNode({EXPR_KVAR});
             inp_node->data.kword = (expr->data.stand == EXPR_ST_IN) ? EXPR_KW_NIO : EXPR_KW_CIO;
-            BinTreeNode* cur_n_node = newOpNode(EXPR_O_EQLTR, inp_node, destandartifyProgram_(cur_o_node->left));
+            BinTreeNode* cur_n_node = newOpNode(EXPR_O_EQLTR, inp_node, destandartifyProgram_(expr->left->left));
 
             while(cur_o_node && cur_o_node->data.type == EXPR_OP && cur_o_node->data.op == EXPR_O_COMMA){
                 BinTreeNode* new_node = newOpNode(EXPR_O_EQLTR, inp_node, destandartifyProgram_(cur_o_node->left));
@@ -183,12 +183,14 @@ static BinTreeNode* destandartifyProgram_(BinTreeNode* expr, bool arg = false){
             BinTreeNode* new_node = newOpNode(EXPR_O_FDEF, name_node,
                                               newOpNode(EXPR_O_SEP, destandartifyProgram_(expr->left->left, true  )
                                                                   , destandartifyProgram_(expr->right             ) ));
+            binTreeUpdSize(new_node);
             return new_node;
         }
         if (expr->data.stand == EXPR_ST_CALL){
             BinTreeNode* new_node = binTreeNewNode({EXPR_FUNC});
             new_node->data.name = strdup(expr->left->data.name);
             new_node->right = destandartifyProgram_(expr->left->left, true);
+            binTreeUpdSize(new_node);
             return new_node;
         }
     }
@@ -214,14 +216,19 @@ static BinTreeNode* destandartifyProgram_(BinTreeNode* expr, bool arg = false){
         return new_node;
     }
     if (expr->data.op == EXPR_O_VDEF){
-        return newOpNode(EXPR_O_VDEF, nullptr,
+        if(expr->right){
+            return newOpNode(EXPR_O_VDEF, nullptr,
                 newOpNode(EXPR_O_EQRTL, destandartifyProgram_(expr->left), destandartifyProgram_(expr->right)));
+        }
+        else{
+            return newOpNode(EXPR_O_VDEF, nullptr, destandartifyProgram_(expr->left));
+        }
     }
 
 
     BinTreeNode* new_node = binTreeNewNode(expr->data);
-    expr->left  = destandartifyProgram_(expr->left );
-    expr->right = destandartifyProgram_(expr->right);
+    new_node->left  = destandartifyProgram_(expr->left );
+    new_node->right = destandartifyProgram_(expr->right);
     if(canExprOpBeUnary(expr->data.op) && !(expr->right)){
         new_node->right = new_node->left;
         new_node->left = nullptr;

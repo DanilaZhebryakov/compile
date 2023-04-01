@@ -4,10 +4,10 @@
 #include "logging.h"
 #include "debug_utils.h"
 
-#define ELEM_T void*
+#define ELEM_T int
 
 #define ELEM_SPEC "%p"
-#define BAD_ELEM nullptr
+#define BAD_ELEM 666
 #define DESTRUCT_PTR ((ELEM_T*)0xBAD)
 #define STACK_MIN_SIZE 10
 #define STACK_NO_PROTECT

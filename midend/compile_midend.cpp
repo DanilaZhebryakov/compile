@@ -16,9 +16,9 @@ static BinTreeNode* processCodeBlock(BinTreeNode* node, ConstTable* consts, int 
     if (!node){
         return nullptr;
     }
-    if(node->data.type == EXPR_OP && node->data.op == EXPR_O_ENDL){
+    if (node->data.type == EXPR_OP && node->data.op == EXPR_O_ENDL){
         BinTreeNode* ret = processCode(node, consts, lvl+1);
-        while(consts->size > 0 && (((ConstEntry*)consts->data) + consts->size - 1)->depth >= lvl) {
+        while (consts->size > 0 && (((ConstEntry*)consts->data) + consts->size - 1)->depth >= lvl) {
             binTreeDtor(constTableGetLast(consts)->value); //dtor needed, so just descendlvl will not work
 
             assert_log(ustackPop(consts, nullptr) == VAR_NOERROR);
@@ -28,6 +28,7 @@ static BinTreeNode* processCodeBlock(BinTreeNode* node, ConstTable* consts, int 
     }
     return processCode(node, consts, lvl);
 }
+
 
 
 static BinTreeNode* processCode(BinTreeNode* node, ConstTable* consts, int lvl){

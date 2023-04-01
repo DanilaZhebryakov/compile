@@ -44,7 +44,7 @@ static BINTREE_ELEM_T readElem(FILE* file){
     char* buffer = (char*)calloc(MAX_FORM_WORD_LEN, sizeof(char));
     ExprElem elem = scanExprElem(file, c, buffer);
     free(buffer);
-    fscanf(file, "[%d:%d]", &(elem.file_line), &(elem.line_pos));
+    fscanf(file, "[%ld:%ld]", &(elem.file_line), &(elem.line_pos));
     elem.file_name = "x";
     fgetc(file);
     if(func){
@@ -519,7 +519,7 @@ static void binTreePrintToFile_(BinTreeNode* node, FILE* file, int layer = 0){
     place_tabs(layer)
     fprintf (file, "\""  );
     dumpElem(file, &(node->data));
-    fprintf(file, "[%d:%d]", node->data.file_line, node->data.line_pos);
+    fprintf(file, "[%ld:%ld]", node->data.file_line, node->data.line_pos);
     fprintf (file, "\"\n");
     place_tabs(layer)
     if (node->left){

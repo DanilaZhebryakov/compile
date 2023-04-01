@@ -1,1 +1,185 @@
-{ ST { FUNC { "main" { NIL } { TYPE { NIL } { NIL } } } { ST { CALL { "helloworld" { NIL } { NIL } } { NIL } } { ST { RET { 0 } { NIL } } { NIL } } } } { ST { FUNC { "helloworld" { NIL } { VOID { NIL } { NIL } } } { ST { OUT { PARAM { 4 } { NIL } } { NIL } } { ST { RET { NIL } { NIL } } { NIL } } } } { NIL } } } 
+{
+  ST
+  {
+    FUNC
+    {
+      "main"
+      { NIL }
+      {
+        VOID
+        { NIL }
+        { NIL }
+      }
+    }
+    {
+      ST
+      {
+        FUNC
+        {
+          "fact"
+          {
+            PARAM
+            {
+              VAR
+              {
+                "n"
+                { NIL }
+                { NIL }
+              }
+              { NIL }
+            }
+            { NIL }
+          }
+          {
+            TYPE
+            { NIL }
+            { NIL }
+          }
+        }
+        {
+          ST
+          {
+            IF
+            {
+              "n"
+              { NIL }
+              { NIL }
+            }
+            {
+              SEP
+              {
+                RET
+                {
+                  MUL
+                  {
+                    CALL
+                    {
+                      "fact"
+                      {
+                        PARAM
+                        {
+                          SUB
+                          {
+                            "n"
+                            { NIL }
+                            { NIL }
+                          }
+                          {
+                            1
+                            { NIL }
+                            { NIL }
+                          }
+                        }
+                        { NIL }
+                      }
+                      { NIL }
+                    }
+                    { NIL }
+                  }
+                  {
+                    "n"
+                    { NIL }
+                    { NIL }
+                  }
+                }
+                { NIL }
+              }
+              {
+                RET
+                {
+                  1
+                  { NIL }
+                  { NIL }
+                }
+                { NIL }
+              }
+            }
+          }
+          { NIL }
+        }
+      }
+      {
+        ST
+        {
+          VAR
+          {
+            "x"
+            { NIL }
+            { NIL }
+          }
+          { NIL }
+        }
+        {
+          ST
+          {
+            EQ
+            {
+              "x"
+              { NIL }
+              { NIL }
+            }
+            {
+              0
+              { NIL }
+              { NIL }
+            }
+          }
+          {
+            ST
+            {
+              IN
+              {
+                PARAM
+                {
+                  "x"
+                  { NIL }
+                  { NIL }
+                }
+                { NIL }
+              }
+              { NIL }
+            }
+            {
+              ST
+              {
+                OUT
+                {
+                  PARAM
+                  {
+                    CALL
+                    {
+                      "fact"
+                      {
+                        PARAM
+                        {
+                          "x"
+                          { NIL }
+                          { NIL }
+                        }
+                        { NIL }
+                      }
+                      { NIL }
+                    }
+                    { NIL }
+                  }
+                  { NIL }
+                }
+                { NIL }
+              }
+              {
+                ST
+                {
+                  RET
+                  { NIL }
+                  { NIL }
+                }
+                { NIL }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  { NIL }
+}

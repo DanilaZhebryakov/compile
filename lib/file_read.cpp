@@ -33,7 +33,7 @@ void* readBinFile(const char* filename, size_t* len){
     size_t fread_val = fread( file_content, sizeof(char), file_size, file);
     fclose(file);
     if (fread_val != file_size){
-        fprintf(stderr,"Error: fread error \nFile:%s \nLine:%d \nFunc:%s\nExpected %Iu bytes ,got %Iu. \nFunction returns nullptr\n",
+        fprintf(stderr,"Error: fread error \nFile:%s \nLine:%d \nFunc:%s\nExpected %lu bytes ,got %lu. \nFunction returns nullptr\n",
                                             __FILE__,__LINE__, __PRETTY_FUNCTION__, file_size, fread_val);
         free(file_content);
         return nullptr;
@@ -51,7 +51,8 @@ String readFile( FILE* file) {
     assert_ret(file_content != nullptr, ((String){nullptr, 0}));
     size_t fread_val = fread( file_content, sizeof(char), file_size, file);
     if (errno != 0){
-        fprintf(stderr,"Error: fread error \nFile:%s \nLine:%d \nFunc:%s\nExpected %Iu chars ,got %Iu. \nFunction returns nullptr\n",
+        perror("fread error");
+        fprintf(stderr,"Error: fread error \nFile:%s \nLine:%d \nFunc:%s\nExpected %lu chars ,got %lu. \nFunction returns nullptr\n",
                                             __FILE__,__LINE__, __PRETTY_FUNCTION__, file_size, fread_val);
         free(file_content);
         return {nullptr, 0};

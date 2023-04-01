@@ -95,7 +95,7 @@ void printExprElem(FILE* file, ExprElem elem){
         fprintf(file, "PAIN");
         break;
     case EXPR_OP:
-        fprintf(file, exprOpName(elem.op));
+        fputs(exprOpName(elem.op), file);
         break;
     case EXPR_CONST:
         fprintf(file, "%lg", elem.val);

@@ -3,10 +3,263 @@ pop rbp
 push 0
 pop [99]
 #{
-jmp :function_main_1*skip
-function_main_1:
+jmp :function_solveLinear_1*skip
+function_solveLinear_1:
 #{
 #begin of rcb 2
+#Load var a to reg r2
+#Load var b to reg r3
+#save
+#reg 2 contains var a (@0)
+#reg 3 contains var b (@1)
+push r2
+pop [rbp + 0]
+push r3
+pop [rbp + 1]
+#search for reg with a (0x5622e55cb858)
+#Load var a to reg r2
+push [rbp + 0]
+pop r2
+push r2
+push 0
+jne :if_else_3
+#save
+#reg 2 contains var a (@0)
+push r2
+pop [rbp + 0]
+#search for reg with b (0x5622e55cb870)
+#Load var b to reg r2
+push [rbp + 1]
+pop r2
+push r2
+push 0
+jne :if_else_4
+#aset:
+push 'S'
+outch
+push 'o'
+push 1
+pop rnn
+outch
+push 'l'
+push 2
+pop rnn
+outch
+push 'u'
+push 3
+pop rnn
+outch
+push 't'
+push 4
+pop rnn
+outch
+push 'i'
+push 5
+pop rnn
+outch
+push 'o'
+push 6
+pop rnn
+outch
+push 'n'
+push 7
+pop rnn
+outch
+push ':'
+push 8
+pop rnn
+outch
+push ' '
+push 9
+pop rnn
+outch
+push 'a'
+push 10
+pop rnn
+outch
+push 'n'
+push 11
+pop rnn
+outch
+push 'y'
+push 12
+pop rnn
+outch
+push ' '
+push 13
+pop rnn
+outch
+push 'n'
+push 14
+pop rnn
+outch
+push 'u'
+push 15
+pop rnn
+outch
+push 'm'
+push 16
+pop rnn
+outch
+push 'b'
+push 17
+pop rnn
+outch
+push 'e'
+push 18
+pop rnn
+outch
+push 'r'
+push 19
+pop rnn
+outch
+push 10
+push 20
+pop rnn
+outch
+#Easet:
+#save
+#reg 2 contains var b (@1)
+push r2
+pop [rbp + 1]
+jmp :if_end_4
+if_else_4:
+#aset:
+push 'N'
+outch
+push 'o'
+push 1
+pop rnn
+outch
+push ' '
+push 2
+pop rnn
+outch
+push 's'
+push 3
+pop rnn
+outch
+push 'o'
+push 4
+pop rnn
+outch
+push 'l'
+push 5
+pop rnn
+outch
+push 'u'
+push 6
+pop rnn
+outch
+push 't'
+push 7
+pop rnn
+outch
+push 'i'
+push 8
+pop rnn
+outch
+push 'o'
+push 9
+pop rnn
+outch
+push 'n'
+push 10
+pop rnn
+outch
+push 's'
+push 11
+pop rnn
+outch
+push 10
+push 12
+pop rnn
+outch
+#Easet:
+#save
+if_end_4:
+#save
+jmp :if_end_3
+if_else_3:
+#{
+#aset:
+push 'S'
+outch
+push 'o'
+push 1
+pop rnn
+outch
+push 'l'
+push 2
+pop rnn
+outch
+push 'u'
+push 3
+pop rnn
+outch
+push 't'
+push 4
+pop rnn
+outch
+push 'i'
+push 5
+pop rnn
+outch
+push 'o'
+push 6
+pop rnn
+outch
+push 'n'
+push 7
+pop rnn
+outch
+push ':'
+push 8
+pop rnn
+outch
+push ' '
+push 9
+pop rnn
+outch
+push 0
+push 10
+pop rnn
+outch
+#Easet:
+#src:
+#search for reg with b (0x5622e55cb870)
+#Load var b to reg r2
+push [rbp + 1]
+pop r2
+push r2
+sub
+#search for reg with a (0x5622e55cb858)
+#reg0: b (0x5622e55cb870) 
+#Load var a to reg r3
+push [rbp + 0]
+pop r3
+push r3
+div
+#Esrc:
+out
+#src:
+push 10
+#Esrc:
+outch
+#src:
+push 0
+#Esrc:
+pop rax
+jmp :eocb_2
+#}
+#save
+#reg 2 contains var b (@1)
+#reg 3 contains var a (@0)
+push r2
+pop [rbp + 1]
+push r3
+pop [rbp + 0]
+if_end_3:
 #src:
 push 0
 #Esrc:
@@ -17,27 +270,459 @@ push rax
 #}
 swap
 ret
-function_main_1*skip:
-jmp :function_helloworld_3*skip
-function_helloworld_3:
+function_solveLinear_1*skip:
+jmp :function_solveSquare_5*skip
+function_solveSquare_5:
 #{
-#begin of rcb 4
+#begin of rcb 6
+#Load var a to reg r2
+#Load var b to reg r3
+#Load var c to reg r4
+#save
+#reg 2 contains var a (@0)
+#reg 3 contains var b (@1)
+#reg 4 contains var c (@2)
+push r2
+pop [rbp + 0]
+push r3
+pop [rbp + 1]
+push r4
+pop [rbp + 2]
+#search for reg with a (0x5622e55cb858)
+#Load var a to reg r2
+push [rbp + 0]
+pop r2
+push r2
+push 0
+jne :if_end_7
+#{
 #src:
-push 4
+#search for reg with b (0x5622e55cb870)
+#reg0: a (0x5622e55cb858) 
+#Load var b to reg r3
+push [rbp + 1]
+pop r3
+push r3
+#search for reg with c (0x5622e55cb888)
+#reg0: a (0x5622e55cb858) 
+#reg1: b (0x5622e55cb870) 
+#Load var c to reg r4
+push [rbp + 2]
+pop r4
+push r4
+push :function_solveLinear_1
+pop rax
+#save
+#reg 2 contains var a (@0)
+#reg 3 contains var b (@1)
+#reg 4 contains var c (@2)
+push r2
+pop [rbp + 0]
+push r3
+pop [rbp + 1]
+push r4
+pop [rbp + 2]
+#call of func
+push rbp
+push 3 
+add
+pop rbp
+pop r3
+pop r2
+push [98]
+push rbp
+pop [98]
+call rax
+swap
+pop [98]
+push rbp
+push 3 
+sub
+pop rbp
+#end of func call
 #Esrc:
-out
+pop rax
+jmp :eocb_6
+#}
+#save
+if_end_7:
+#src:
+#search for reg with b (0x5622e55cb870)
+#Load var b to reg r2
+push [rbp + 1]
+pop r2
+push r2
+#search for reg with b (0x5622e55cb870)
+#reg0: b (0x5622e55cb870) 
+push r2
+mul
+push 4
+#search for reg with a (0x5622e55cb858)
+#reg0: b (0x5622e55cb870) 
+#Load var a to reg r3
+push [rbp + 0]
+pop r3
+push r3
+mul
+#search for reg with c (0x5622e55cb888)
+#reg0: b (0x5622e55cb870) 
+#reg1: a (0x5622e55cb858) 
+#Load var c to reg r4
+push [rbp + 2]
+pop r4
+push r4
+mul
+sub
+#Esrc:
+#search for reg with d_ (0x5622e55cb8a0)
+#reg0: b (0x5622e55cb870) 
+#reg1: a (0x5622e55cb858) 
+#reg2: c (0x5622e55cb888) 
+#Load var d_ to reg r5
+pop r5
+#save
+#reg 2 contains var b (@1)
+#reg 3 contains var a (@0)
+#reg 4 contains var c (@2)
+#reg 5 contains var d_ (@3)
+push r2
+pop [rbp + 1]
+push r3
+pop [rbp + 0]
+push r4
+pop [rbp + 2]
+push r5
+pop [rbp + 3]
+#search for reg with d_ (0x5622e55cb8a0)
+#Load var d_ to reg r2
+push [rbp + 3]
+pop r2
+push r2
+push 0
+jge :if_end_8
+#{
+#aset:
+push 'N'
+outch
+push 'o'
+push 1
+pop rnn
+outch
+push ' '
+push 2
+pop rnn
+outch
+push 's'
+push 3
+pop rnn
+outch
+push 'o'
+push 4
+pop rnn
+outch
+push 'l'
+push 5
+pop rnn
+outch
+push 'u'
+push 6
+pop rnn
+outch
+push 't'
+push 7
+pop rnn
+outch
+push 'i'
+push 8
+pop rnn
+outch
+push 'o'
+push 9
+pop rnn
+outch
+push 'n'
+push 10
+pop rnn
+outch
+push 's'
+push 11
+pop rnn
+outch
+push 10
+push 12
+pop rnn
+outch
+#Easet:
 #src:
 push 0
 #Esrc:
 pop rax
-jmp :eocb_4
-eocb_4:
+jmp :eocb_6
+#}
+#save
+#reg 2 contains var d_ (@3)
+push r2
+pop [rbp + 3]
+if_end_8:
+#save
+#search for reg with d_ (0x5622e55cb8a0)
+#Load var d_ to reg r2
+push [rbp + 3]
+pop r2
+push r2
+push 0
+jne :if_end_9
+#{
+#aset:
+push 'S'
+outch
+push 'o'
+push 1
+pop rnn
+outch
+push 'l'
+push 2
+pop rnn
+outch
+push 'u'
+push 3
+pop rnn
+outch
+push 't'
+push 4
+pop rnn
+outch
+push 'i'
+push 5
+pop rnn
+outch
+push 'o'
+push 6
+pop rnn
+outch
+push 'n'
+push 7
+pop rnn
+outch
+push ':'
+push 8
+pop rnn
+outch
+push ' '
+push 9
+pop rnn
+outch
+#Easet:
+#src:
+#search for reg with b (0x5622e55cb870)
+#reg0: d_ (0x5622e55cb8a0) 
+#Load var b to reg r3
+push [rbp + 1]
+pop r3
+push r3
+sub
+push 2
+#search for reg with a (0x5622e55cb858)
+#reg0: d_ (0x5622e55cb8a0) 
+#reg1: b (0x5622e55cb870) 
+#Load var a to reg r4
+push [rbp + 0]
+pop r4
+push r4
+mul
+div
+#Esrc:
+out
+#src:
+push 10
+#Esrc:
+outch
+#src:
+push 0
+#Esrc:
+pop rax
+jmp :eocb_6
+#}
+#save
+#reg 2 contains var d_ (@3)
+#reg 3 contains var b (@1)
+#reg 4 contains var a (@0)
+push r2
+pop [rbp + 3]
+push r3
+pop [rbp + 1]
+push r4
+pop [rbp + 0]
+if_end_9:
+#src:
+#search for reg with d_ (0x5622e55cb8a0)
+#Load var d_ to reg r2
+push [rbp + 3]
+pop r2
+push r2
+sqrt
+#Esrc:
+#search for reg with d_ (0x5622e55cb8a0)
+#reg0: d_ (0x5622e55cb8a0) 
+pop r2
+#aset:
+push 'S'
+outch
+push 'o'
+push 1
+pop rnn
+outch
+push 'l'
+push 2
+pop rnn
+outch
+push 'u'
+push 3
+pop rnn
+outch
+push 't'
+push 4
+pop rnn
+outch
+push 'i'
+push 5
+pop rnn
+outch
+push 'o'
+push 6
+pop rnn
+outch
+push 'n'
+push 7
+pop rnn
+outch
+push 's'
+push 8
+pop rnn
+outch
+push ':'
+push 9
+pop rnn
+outch
+push ' '
+push 10
+pop rnn
+outch
+#Easet:
+#src:
+#search for reg with d_ (0x5622e55cb8a0)
+#reg0: d_ (0x5622e55cb8a0) 
+push r2
+#search for reg with b (0x5622e55cb870)
+#reg0: d_ (0x5622e55cb8a0) 
+#Load var b to reg r3
+push [rbp + 1]
+pop r3
+push r3
+sub
+push 2
+#search for reg with a (0x5622e55cb858)
+#reg0: d_ (0x5622e55cb8a0) 
+#reg1: b (0x5622e55cb870) 
+#Load var a to reg r4
+push [rbp + 0]
+pop r4
+push r4
+mul
+div
+#Esrc:
+out
+#aset:
+push ' '
+outch
+#Easet:
+#src:
+#search for reg with d_ (0x5622e55cb8a0)
+#reg0: d_ (0x5622e55cb8a0) 
+push r2
+sub
+#search for reg with b (0x5622e55cb870)
+#reg0: d_ (0x5622e55cb8a0) 
+#reg1: b (0x5622e55cb870) 
+push r3
+sub
+push 2
+#search for reg with a (0x5622e55cb858)
+#reg0: d_ (0x5622e55cb8a0) 
+#reg1: b (0x5622e55cb870) 
+#reg2: a (0x5622e55cb858) 
+push r4
+mul
+div
+#Esrc:
+out
+#src:
+push 10
+#Esrc:
+outch
+#src:
+push 0
+#Esrc:
+pop rax
+jmp :eocb_6
+eocb_6:
 push rax
 #}
 swap
 ret
-function_helloworld_3*skip:
-push :function_main_1
+function_solveSquare_5*skip:
+#aset:
+push 'E'
+outch
+push 'n'
+push 1
+pop rnn
+outch
+push 't'
+push 2
+pop rnn
+outch
+push 'e'
+push 3
+pop rnn
+outch
+push 'r'
+push 4
+pop rnn
+outch
+push ' '
+push 5
+pop rnn
+outch
+push 'a'
+push 6
+pop rnn
+outch
+push ','
+push 7
+pop rnn
+outch
+push 'b'
+push 8
+pop rnn
+outch
+push ','
+push 9
+pop rnn
+outch
+push 'c'
+push 10
+pop rnn
+outch
+push ' '
+push 11
+pop rnn
+outch
+#Easet:
+inp
+inp
+inp
+push :function_solveSquare_5
 pop rax
 #save
 #call of func
@@ -45,6 +730,9 @@ push rbp
 push 0 
 add
 pop rbp
+pop r4
+pop r3
+pop r2
 push [98]
 push rbp
 pop [98]

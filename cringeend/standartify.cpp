@@ -84,7 +84,7 @@ static void writeProgramToFile_st_(BinTreeNode* expr, FILE* file, int layer){
         writeProgramToFile_st_(expr->left, file, layer+1);
     }
     else{
-        fprintf(file, "{NIL}\n");
+        fprintf(file, "{ NIL }\n");
     }
 
     place_tabs(layer)
@@ -93,7 +93,7 @@ static void writeProgramToFile_st_(BinTreeNode* expr, FILE* file, int layer){
         writeProgramToFile_st_(expr->right, file, layer+1);
     }
     else{
-        fprintf(file, "{NIL}\n");
+        fprintf(file, "{ NIL }\n");
     }
 
     place_tabs(layer-1)
@@ -221,7 +221,7 @@ static BinTreeNode** standartifySetVar_(BinTreeNode* expr, BinTreeNode** tgt, Bi
 
     if (src->data.type == EXPR_KVAR && (src->data.kword == EXPR_KW_NIO || src->data.kword == EXPR_KW_CIO)) {
         BinTreeNode* new_node = binTreeNewNode({EXPR_STAND});
-        new_node->data.stand = (dst->data.kword == EXPR_KW_NIO) ? EXPR_ST_IN : EXPR_ST_INCH;
+        new_node->data.stand = (src->data.kword == EXPR_KW_NIO) ? EXPR_ST_IN : EXPR_ST_INCH;
         new_node->left = standartifyCodeBlock_(dst, ret_val_node, EXPR_O_COMMA);
         return addStNode(new_node ,tgt);
     }
@@ -378,7 +378,11 @@ static BinTreeNode** standartifyProgram_(BinTreeNode* expr, BinTreeNode** tgt, B
 BinTreeNode* standartifyProgram(BinTreeNode* expr){
     BinTreeNode* res = nullptr;
     BinTreeNode* retval = nullptr;
-    standartifyProgram_(expr, &res, &retval);
+    BinTreeNode** r_end = standartifyProgram_(expr, &res, &retval);
+    BinTreeNode* ret_node = binTreeNewNode({EXPR_KVAR});
+    ret_node->data.kword = EXPR_KW_RET;
+    addStNode(ret_node, r_end);
+    addStNode(nullptr, r_end);
 
     BinTreeNode* main_func_node = binTreeNewNode({EXPR_STAND});
     main_func_node->data.stand = EXPR_ST_FUNC;

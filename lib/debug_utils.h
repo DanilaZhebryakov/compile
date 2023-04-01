@@ -42,7 +42,6 @@ enum varError_t{
 
 };
 
-void printVarError_log(varError_t err);
 
 #define passError(_err_t, _err )  {                   \
     if(_err != ERR_NOERROR){                        \

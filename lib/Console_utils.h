@@ -13,8 +13,10 @@ enum consoleColor {
 
     COLOR_INTENSE   = 0b1000,
     COLOR_DEFAULTT  = 0b1111,
+    COLOR_DEFAULTB  = 0b0000,
     COLOR_REDI      = 0b1100,
-    COLOR_NOCHANGE  = 0b10000
+    COLOR_NOCHANGE  = 0b10000,
+    COLOR_DEFAULT   = 0b100000
 };
 unsigned int consoleColorAsHex(consoleColor col);
 

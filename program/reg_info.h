@@ -22,8 +22,11 @@ static void printRegInfo(REG_ADD_ARGS RegInfo* regs){
 }
 
 static int getRegWithVar(REG_ADD_ARGS RegInfo* regs, VarEntry* var){
+    fprintf(file, "#search for reg with %s (%p)\n", var->name, var);
     for (int i = 0; i < REG_USE_CNT; i++){
-        if (regs[i].var == var){
+        if(regs[i].var)
+            fprintf(file, "#reg%d: %s (%p) \n",i, regs[i].var->name, regs[i].var);
+        if (regs[i].var == var) {
             return i;
         }
     }
