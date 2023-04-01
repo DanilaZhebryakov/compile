@@ -132,7 +132,7 @@ static void compileFuncCall(FILE* file, ProgramPosData* pos, RegInfo* regs, int 
 
 //two types of code blocks exist: RCB (returnable code block) (req_val = 1) and normal code block
 //RCB puts a result on a stack. But ret operator puts result in rax
-//ret operator jumps to the end of last RCB it is in (out of any non-rcb) (in top block it creates assembly error)
+//ret operator jumps to the end of last RCB it is in (out of any non-rcb) (in top block exits program)
 
 #define COMPILE_CODE_BLOCK(_req_val, ...)                       \
     {                                                           \
@@ -240,7 +240,7 @@ static bool compileConditionJump(F_DEF_ARGS, bool inv, const char* lbl_id){
 static int compileArgList(F_DEF_ARGS){
     if (!expr)
         return 0;
-    if  (expr->data.type != EXPR_OP || expr->data.op != EXPR_O_ENDL){
+    if  (expr->data.type != EXPR_OP || expr->data.op != EXPR_O_SEP){
         if (!compileCodeBlock(F_ARGS(expr), true))
             return -1;
         return 1;
@@ -434,7 +434,7 @@ static bool compileSetDst(F_DEF_ARGS, bool create_vars = false, bool arr = false
         case EXPR_KW_BAD:
             ASM_OUT("bad\n");
             return cmp_ok;
-        case EXPR_KW_HALT:
+        case EXPR_KW_EXIT:
             ASM_OUT("halt\n");
             return cmp_ok;
         case EXPR_KW_NULL:
@@ -754,7 +754,7 @@ static bool compileCode(F_DEF_ARGS){
         case EXPR_KW_BAD:
             ASM_OUT("bad\n");
             return cmp_ok;
-        case EXPR_KW_HALT:
+        case EXPR_KW_EXIT:
             ASM_OUT("halt\n");
             return cmp_ok;
         case EXPR_KW_NULL:
@@ -811,7 +811,7 @@ static bool compileCode(F_DEF_ARGS){
                 return false;
             }
             regsDescendLvl(file, pos, regs, 0, true);
-            if(expr->right->data.type == EXPR_OP && expr->right->data.op == EXPR_O_SEP){
+            if(expr->right->data.type == EXPR_OP && expr->right->data.op == EXPR_O_ELSE){
 
                 sprintf(t_lbl, "if_else_%d", instr_lbl_n);
                 CHECK(compileConditionJump(F_ARGS(expr->left),false , true, t_lbl));
@@ -938,8 +938,7 @@ bool compileProgram(FILE* file, BinTreeNode* code){
     if (!ret){
         error_log("Compiltion failed");
     }
-
-
+    ASM_OUT("eocb_%d:\n", pos.code_block_id);
     programPosDataDtor(&pos);
     programNameTableDtor(&objs);
     return ret;

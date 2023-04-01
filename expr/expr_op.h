@@ -5,9 +5,12 @@
 #define EXPR_OP_DEF(_enum, _enumval, _name, _pri, _ret, _std) \
 _enum = _enumval,
 
+#include "expr_op_flags.h"
 enum exprOpType_t{
-    EXPR_O_UNARY = 0x80,
-    EXPR_O_MATH  = 0x40,
+    EXPR_O_UNARY = EF_UNAR,
+    EXPR_O_MATH  = EF_MATH,
+    EXPR_O_EQL   = EF_EQL,
+    EXPR_O_REV   = EF_REV,
     EXPR_O_NOTOP = 0,
     #include "expr_op_defines.h"
 };

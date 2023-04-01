@@ -1,6 +1,6 @@
 ﻿#(
 
-solveLinear ✷ (★ a, b) ✘ (
+solveLinear ✷ (★ a, b) ⁝ (
    (a = 0) ⁉
    (
      (b = 0)⁉
@@ -16,10 +16,10 @@ solveLinear ✷ (★ a, b) ✘ (
    🚪 ← 0;
 );
 
-solveSquare ✷ (★ a, b, c) ✘ (
+solveSquare ✷ (★ a, b, c) ⁝ (
    (a = 0)⁉
    (
-     🚪 ← solveLinear(b; c);
+     🚪 ← solveLinear(b ⁝ c);
    );
    ★ d_ ← ( (b*b) - (4*a*c) );
    (d_ < 0)⁉
@@ -46,6 +46,6 @@ solveSquare ✷ (★ a, b, c) ✘ (
 );
 
 ᐃ ← "Enter a,b,c ";
-solveSquare(▲; ▲; ▲);
+solveSquare(▲ ⁝ ▲ ⁝ ▲);
 
 )
