@@ -4,6 +4,7 @@
 #include "expr/formule_utils.h"
 
 int main(){
+    warn_log("WARN test");
     FILE* tree_file = fopen("program_tree.three", "r");
     BinTreeNode* prog = binTreeReadFromFile(tree_file);
 

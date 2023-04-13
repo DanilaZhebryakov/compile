@@ -73,13 +73,13 @@ FILE* initLogFile(){
 void printf_log(const char* format, ...){
     va_list args;
     va_start(args, format);
-    setConsoleColor(stderr, COLOR_WHITE, COLOR_BLACK);
+    //setConsoleColor(stderr, COLOR_WHITE, COLOR_DEFAULT);
     va_list args_c;
     va_copy(args_c, args);
     vfprintf(_logfile, format , args_c);
     va_end(args_c);
     vfprintf( stderr , format , args);
-    setConsoleColor(stderr, COLOR_DEFAULTT, COLOR_BLACK);
+    //setConsoleColor(stderr, COLOR_DEFAULT, COLOR_DEFAULT);
     va_end(args);
 }
 
@@ -117,7 +117,7 @@ void warn_log(const char* format, ...){
 void info_log(const char* format, ...){
     va_list args;
     va_start(args, format);
-    setConsoleColor(stderr, COLOR_WHITE, COLOR_BLACK);
+    setLogColor((consoleColor)(COLOR_CYAN | COLOR_INTENSE));
     fprint_time_nodate(_logfile, time(nullptr));
     fprintf(_logfile, "[info] ");
     fprintf( stderr , "[info] ");
@@ -127,7 +127,7 @@ void info_log(const char* format, ...){
     vfprintf(_logfile, format , args_c);
     va_end(args_c);
     vfprintf( stderr , format , args);
-    setConsoleColor(stderr, COLOR_DEFAULTT, COLOR_BLACK);
+    resetLogColor();
     va_end(args);
 }
 
@@ -191,7 +191,7 @@ void setLogColor(consoleColor text_color, consoleColor background_color){
 }
 
 void resetLogColor(){
-    setConsoleColor(stderr, COLOR_DEFAULTT, COLOR_BLACK);
+    setConsoleColor(stderr, COLOR_DEFAULT, COLOR_DEFAULT);
     #ifdef LOG_USE_HTML
         fprintf(_logfile, "</p>");
     #endif
