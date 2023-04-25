@@ -68,3 +68,5 @@ EXPR_OP_DEF(EXPR_O_EQRTL ,1 | EF_EQL            , u8"←"    , 0 , NAN    , "EQ"
 EXPR_OP_DEF(EXPR_O_EQLTR ,1 | EF_EQL | EF_REV   , u8"→"    , 0 , NAN    , "!!EQ"  )
 EXPR_OP_DEF(EXPR_O_EQARTL ,2 | EF_EQL            , u8"⬲"    , 0 , NAN    , "EQADD"    )
 EXPR_OP_DEF(EXPR_O_EQALTR ,2 | EF_EQL | EF_REV   , u8"⟴"    , 0 , NAN   , "!!EQADD"  )
+EXPR_OP_DEF(EXPR_O_EQSPEC  ,3 | EF_EQL           , u8"!←!"    , 0 , NAN  , "!!EQSPEC"    )
+//not meant for manual use. Generated automatically to resolve stuff like a → b ← c or a ← b → c (resolves into b !←! (a, c) or (a, c) !←! b )
