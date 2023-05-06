@@ -20,8 +20,8 @@ EXPR_OP_DEF(EXPR_MO_SH   ,16 | EF_MATH | EF_UNAR, "sinh", 4, sinh(a)      , "SIN
 EXPR_OP_DEF(EXPR_MO_CH   ,17 | EF_MATH | EF_UNAR, "cosh", 4, cosh(a)      , "COSH")
 EXPR_OP_DEF(EXPR_MO_TH   ,18 | EF_MATH | EF_UNAR, "tanh", 4, tanh(a)      , "TANH")
 EXPR_OP_DEF(EXPR_MO_SQRT ,19 | EF_MATH | EF_UNAR,  u8"√", 4, sqrt(a)      , "SQRT")
-EXPR_OP_DEF(EXPR_MO_o    ,20 | EF_MATH | EF_UNAR, "o"   , 4, 0            , "!!!!")
-EXPR_OP_DEF(EXPR_MO_d    ,21 | EF_MATH | EF_UNAR, "d"   , 4, 0            , "!!!!")
+EXPR_OP_DEF(EXPR_MO_o    ,20 | EF_MATH | EF_UNAR, u8"𝐨" , 4, 0            , "!!!!")
+EXPR_OP_DEF(EXPR_MO_d    ,21 | EF_MATH | EF_UNAR, u8"𝐝" , 4, 0            , "!!!!")
 EXPR_OP_DEF(EXPR_MO_TANP ,22 | EF_MATH | EF_UNAR, "∟"   , 4, tan(b)*1000  , "TANP")
 
 
@@ -44,7 +44,10 @@ EXPR_OP_DEF(EXPR_MO_BSR   ,34 | EF_MATH         , ">>"  , 2, (int)a >>(int)b , "
 // -1 can recieve whole math expresions with =
 //  0 can recieve math expression sides
 
-EXPR_OP_DEF(EXPR_O_COMMA ,1                      , ","      , 0 , NAN    , "PARAM" )
+EXPR_OP_DEF(EXPR_O_COMMA  ,1                      , ","      , 0 , NAN    , "PARAM" )
+EXPR_OP_DEF(EXPR_O_RCOMMA ,1 | EF_REV             , "⸲"      , 0 , NAN    , "RPARAM" )
+
+
 EXPR_OP_DEF(EXPR_O_IF    ,2                      , u8"⁉"    , -3, NAN    , "IF"    )
 EXPR_OP_DEF(EXPR_O_ELSE  ,3                      , u8"✘"    , -2, NAN    , "ELSE"   )
 EXPR_OP_DEF(EXPR_O_SEP   ,4                      , u8"⁝"    , -2, NAN     , "SEP"   )
@@ -55,8 +58,14 @@ EXPR_OP_DEF(EXPR_O_FDEF  ,8                      , u8"✷"    , -3, NAN    , "FU
 EXPR_OP_DEF(EXPR_O_VFDEF ,9                      , u8"❂"    , -3, NAN    , "VFUNC" )
 EXPR_OP_DEF(EXPR_O_CDEF  ,10                     , u8"☆"    , -1, NAN    , "CONST" )
 EXPR_OP_DEF(EXPR_O_ENDL  ,11                     , u8";"    , -4, NAN    , "ST"    )
+EXPR_OP_DEF(EXPR_O_RENDL ,11 | EF_REV            , u8"⸵"    , -4, NAN    , "RST"   )
 EXPR_OP_DEF(EXPR_O_ARIND ,12                     , u8"@"    , 6 , NAN    , "AT"    )
 EXPR_OP_DEF(EXPR_O_ARDEF ,13                     , u8"!@"   , 6 , NAN    , "OF"    )
+
+EXPR_OP_DEF(EXPR_O_CER   ,14                     , u8"⸢"    , -4 , NAN    , "CER"    )
+EXPR_OP_DEF(EXPR_O_CEL   ,15                     , u8"⸣"    , -4 , NAN    , "CEL"    )
+EXPR_OP_DEF(EXPR_O_RCER  ,14 | EF_REV            , u8"⸥"    , -4 , NAN    , "RCER"    )
+EXPR_OP_DEF(EXPR_O_RCEL  ,15 | EF_REV            , u8"⸤"    , -4 , NAN    , "RCEL"    )
 
 EXPR_OP_DEF(EXPR_O_LOAD  ,14 | EF_UNAR           , u8"⟱"    , -2, NAN    , "LOAD"  ) /*for future use with multi-file compilation*/
 EXPR_OP_DEF(EXPR_O_VIEW  ,15 | EF_UNAR           , u8"⏿"    , -2, NAN    , "VIEW"  ) // 'table transfer' (function/variable prototypes)
@@ -66,7 +75,7 @@ EXPR_OP_DEF(EXPR_O_TABL  ,17 | EF_UNAR           , u8"┬─┬"  , -2, NAN    ,
 
 EXPR_OP_DEF(EXPR_O_EQRTL ,1 | EF_EQL            , u8"←"    , 0 , NAN    , "EQ"    )
 EXPR_OP_DEF(EXPR_O_EQLTR ,1 | EF_EQL | EF_REV   , u8"→"    , 0 , NAN    , "!!EQ"  )
-EXPR_OP_DEF(EXPR_O_EQARTL ,2 | EF_EQL            , u8"⬲"    , 0 , NAN    , "EQADD"    )
 EXPR_OP_DEF(EXPR_O_EQALTR ,2 | EF_EQL | EF_REV   , u8"⟴"    , 0 , NAN   , "!!EQADD"  )
+EXPR_OP_DEF(EXPR_O_EQARTL ,2 | EF_EQL            , u8"⬲"    , 0 , NAN    , "EQADD"    )
 EXPR_OP_DEF(EXPR_O_EQSPEC  ,3 | EF_EQL           , u8"!←!"    , 0 , NAN  , "!!EQSPEC"    )
 //not meant for manual use. Generated automatically to resolve stuff like a → b ← c or a ← b → c (resolves into b !←! (a, c) or (a, c) !←! b )

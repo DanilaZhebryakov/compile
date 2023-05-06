@@ -237,7 +237,7 @@ binTreeError_t binTreeBuild(BinTreeNode* node){
 
 binTreeError_t binTreeError_dwn(BinTreeNode* node, bool local){
     binTreeError_t err = binTreeError_base(node);
-
+    printExprElem(stderr, node->data);
     if(err != BTREE_NOERROR){
         return err;
     }
@@ -247,6 +247,7 @@ binTreeError_t binTreeError_dwn(BinTreeNode* node, bool local){
 
     int err_i = 0;
     if (node->left != nullptr){
+        printf_log("<\n");
         binTreeError_t err_s = BTREE_ERRUNK;
         if (local)
             err_s = binTreeError_base(node->left);
@@ -266,6 +267,7 @@ binTreeError_t binTreeError_dwn(BinTreeNode* node, bool local){
     }
 
     if (node->right != nullptr){
+        printf_log(">\n");
         binTreeError_t err_s = BTREE_ERRUNK;
         if (local)
             err_s = binTreeError_base(node->right);
@@ -290,6 +292,7 @@ binTreeError_t binTreeError_dwn(BinTreeNode* node, bool local){
     #endif
 
     clearNodeUsedFlag(node);
+    printf_log("^\n");
     return (binTreeError_t)err_i;
 }
 

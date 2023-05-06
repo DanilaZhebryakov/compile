@@ -18,7 +18,7 @@
         #define LOG_DIR_NAME "logs"
     #endif
     #ifndef LOG_FILE_EXT
-        #define LOG_FILE_EXT ".log"
+        #define LOG_FILE_EXT ".html"
     #endif
 
     #define LOG_USE_HTML

@@ -8,5 +8,5 @@ EXPR_KW_DEF(EXPR_KW_NIO    , 5, u8"▲"  , "SCREEN_N" )
 EXPR_KW_DEF(EXPR_KW_CIO    , 6, u8"ᐃ"  , "SCREEN_C" )
 EXPR_KW_DEF(EXPR_KW_BAD    , 7, u8"🔫"  , "REVOLVER" ) /* the only way to learn the game is to play with better opponent. Like processor exceptions. */
 EXPR_KW_DEF(EXPR_KW_NULL   , 8, u8"∅"   , "trash"    )  /* The Void */
-EXPR_KW_DEF(EXPR_KW_TEMP   , 8, u8"!🇹!", "temp"    ) /* not meant for manual use. temporary data storage if it is required. Like when variable double-read occurs*/
-EXPR_KW_DEF(EXPR_KW_CRET   , 8, u8"!🇷!", "compile_ret"    ) /* not meant for manual use. Used sometimes by compiler to mark data return from expression in special cases*/
+EXPR_KW_DEF(EXPR_KW_TEMP   , 9, u8"!🇹!", "temp"    ) /* not meant for manual use. temporary data storage if it is required. Like when variable double-read occurs*/
+EXPR_KW_DEF(EXPR_KW_CRET   , 10, u8"!🇷!", "compile_ret"    ) /* not meant for manual use. Used sometimes by compiler to mark data return from expression in special cases*/

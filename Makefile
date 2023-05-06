@@ -1,5 +1,5 @@
 CC := g++
-CFLAGS := -D _DEBUG -ggdb3 -std=c++17 -O0 -Wall -Wextra -Wno-missing-field-initializers -I ./
+CFLAGS := -D _DEBUG -g -ggdb3 -std=c++17 -O0 -Wall -Wextra -Wno-missing-field-initializers -I ./
 LFLAGS :=
 OBJDIR := obj
 
