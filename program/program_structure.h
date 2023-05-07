@@ -1,51 +1,19 @@
 #ifndef PROGRAM_STRUCTURE_H_INCLUDED
 #define PROGRAM_STRUCTURE_H_INCLUDED
 
-#include "var_table.h"
-#include "lib/bintree.h"
+#include "lib/UStack.h"
+#define LOG_VARS
 
-struct VarFuncData{
-    char* lbl;
-    bool write;
-};
-
-struct FuncData{
-    char* lbl;
-};
-
-INC_VAR_TABLE(Var  , var  , int          );
-INC_VAR_TABLE(Func , func , FuncData     );
-INC_VAR_TABLE(VFunc, vfunc, VarFuncData  );
-
-int varTableGetNewAddr(VarTable* stk);
-VarEntry* varTableCreate(VarTable* stk, char* s_name, int lvl);
-
-
-struct ProgramNameTable{
-    VarTable* vars;
-    FuncTable* funcs;
-    VFuncTable* vfuncs;
-};
-
-VFuncEntry* vfuncTableGetRW(VFuncTable* stk, const char* name, bool write);
-
-void programNameTableCtor(ProgramNameTable* table);
-
-void programNameTableDtor(ProgramNameTable* table);
 
 struct ProgramPosData{
     int lvl;
     int flvl;
-    int lbl_id;
-    int stack_size;
-    int rbp_offset;
-    int code_block_id;
+    size_t stack_size;
+    size_t code_block_id;
+    size_t rbp_offset;
+    size_t lbl_id;
     UStack add_mem;
 };
-
-void programCreateVar(ProgramNameTable* objs, ProgramPosData* pos, const char* name, int len = 1);
-
-void programDescendLvl(ProgramNameTable* objs, ProgramPosData* pos, int lvl);
 
 void programPosDataCtor(ProgramPosData* data);
 void programAddNewMem(ProgramPosData* data, void* mem);

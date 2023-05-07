@@ -1,6 +1,6 @@
 #include "lib/bintree.h"
 #include "expr/expr_elem.h"
-#include "program/program_structure.h"
+#include "program/program_tables_v1.h"
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #pragma GCC diagnostic push
 
@@ -922,7 +922,7 @@ static bool compileCode(F_DEF_ARGS){
 #pragma GCC diagnostic pop
 
 
-bool compileProgram(FILE* file, BinTreeNode* code){
+bool compileProgram_old(FILE* file, BinTreeNode* code){
     ProgramNameTable objs = {};
     ProgramPosData pos = {};
     programNameTableCtor(&objs);

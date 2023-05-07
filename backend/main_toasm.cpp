@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "compile_backend.h"
+#include "compile_backend_old.h"
 #include "expr/formule_utils.h"
 
 int main(){
@@ -14,7 +14,7 @@ int main(){
     binTreeDump(prog);
 
     FILE* out_file = fopen("program.txt", "w");
-    bool res = compileProgram(out_file, prog);
+    bool res = compileProgram_old(out_file, prog);
     fclose(out_file);
     binTreeDtor(prog);
     return res ? 0:1;
