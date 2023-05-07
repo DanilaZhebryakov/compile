@@ -49,7 +49,8 @@ VFuncEntry* vfuncTableGetRW(VFuncTable* stk, const char* name, bool write){
 }
 
 void programCreateVar(ProgramNameTable* objs, ProgramPosData* pos, const char* name, int len){
-    varTablePut(objs->vars, {pos->rbp_offset, name, pos->lvl, pos->flvl});
+    int offs = pos->rbp_offset;
+    varTablePut(objs->vars, {offs, name, pos->lvl, pos->flvl});
     #ifdef LOG_VARS
     printf_log("Var:%s Level:%d Flevel:%d Addr:%d\n", name, pos->lvl, pos->flvl, pos->rbp_offset);
     #endif

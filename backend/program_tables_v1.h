@@ -1,6 +1,9 @@
-#include "var_table.h"
+#ifndef PROGRAM_TABLES_V1_H_INCLUDED
+#define PROGRAM_TABLES_V1_H_INCLUDED
+
+#include "program/var_table.h"
 #include "lib/bintree.h"
-#include "program_structure.h"
+#include "program/program_structure.h"
 
 struct VarFuncData{
     char* lbl;
@@ -34,3 +37,5 @@ VFuncEntry* vfuncTableGetRW(VFuncTable* stk, const char* name, bool write);
 void programCreateVar(ProgramNameTable* objs, ProgramPosData* pos, const char* name, int len = 1);
 
 void programDescendLvl(ProgramNameTable* objs, ProgramPosData* pos, int lvl);
+
+#endif
